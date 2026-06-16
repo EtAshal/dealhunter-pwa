@@ -1268,7 +1268,7 @@ function inviteFriend(){
       <div style="background:var(--card);border-radius:var(--r-lg);padding:16px;border:1px solid var(--border);margin-bottom:20px">
         ${p.redeemedCode
           ?`<div style="display:flex;align-items:center;gap:8px"><span style="color:#4ADE80;font-size:18px">✓</span><span style="color:var(--text2);font-size:14px">Код <span style="color:var(--accent)">${p.redeemedCode}</span> активирован</span></div>`
-          :`<div style="display:flex;gap:10px"><input id="redeemInput" type="text" placeholder="Введите код друга" maxlength="10" style="flex:1;background:var(--card2);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;color:var(--text);font-size:15px;font-weight:600;outline:none;text-transform:uppercase"><button onclick="redeemRefCode()" style="background:var(--accent);color:#fff;border:none;border-radius:var(--r-md);padding:12px 16px;font-size:13px;font-weight:800;cursor:pointer">Активировать</button></div>`
+          :`<div style="display:flex;gap:10px"><input id="redeemInput" type="text" placeholder="Введите код друга" maxlength="10" style="flex:1;background:var(--card2);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 12px;color:var(--text);font-size:13px;font-weight:600;outline:none"><button onclick="redeemRefCode()" style="background:var(--accent);color:#fff;border:none;border-radius:var(--r-md);padding:10px 14px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap">Активировать</button></div>`
         }
       </div>
       <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Как это работает</div>
