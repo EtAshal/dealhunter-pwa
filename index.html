@@ -387,8 +387,9 @@ function cardHTML(d, extraClass=''){
   else if(isFlight && d.price_current) badgeHTML=`<div class="card-badge flight">от ${d.price_current.toLocaleString('ru')} ₽</div>`;
   else if(d.discount>0) badgeHTML=`<div class="card-badge discount">-${d.discount}%</div>`;
 
+  const proxyImg = d.image ? 'https://images.weserv.nl/?url=' + encodeURIComponent(d.image) + '&w=400&q=80' : '';
   const imgHTML = d.image
-    ? `<img class="card-img" src="${d.image}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+    ? `<img class="card-img" src="${proxyImg}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
     : '';
   const placeholderStyle = d.image ? 'display:none' : 'display:flex';
   const bgColor = (store.color||'#333')+'33';
