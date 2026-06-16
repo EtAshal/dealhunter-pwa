@@ -342,7 +342,7 @@ function getStore(id){return STORES[id]||{name:id,logo:'🏷️',color:'#333'}}
 
 // ── Fetch ──
 async function fetchData(){
-  const r = await fetch('/data.json?v=' + Date.now());
+  const r = await fetch('data.json?v=' + Date.now());
   if(!r.ok) throw new Error(r.status);
   return r.json();
 }
