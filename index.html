@@ -671,7 +671,8 @@ function cardHTML(d, extraClass=''){
 // ── Categories ──
 function renderCats(){
   const el=document.getElementById('cats');
-  el.innerHTML=CATEGORIES.map(c=>{
+  const enabledCats=getEnabledCategories();
+  el.innerHTML=CATEGORIES.filter(c=>c.id==='all'||enabledCats.includes(c.id)).map(c=>{
     const active=c.id===activeCategory;
     const style=active && c.id!=='all' ? `border-color:${c.color}40` : '';
     return `<button class="cat-chip ${active?'active':''}" data-cat="${c.id}" style="${style}">
@@ -896,10 +897,12 @@ function renderHome(){
   html+=liveFeedHTML();
 
   // Category sections
+  const enabledCats=getEnabledCategories();
   CATEGORIES.filter(c=>c.id!=='all').forEach(cat=>{
+    if(!enabledCats.includes(cat.id)) return;
     const catDeals=cat.id==='market'
-      ? deals.filter(d=>MARKETPLACE_IDS.includes(d.store_id))
-      : deals.filter(d=>d.category_id===cat.id);
+      ? allDeals.filter(d=>MARKETPLACE_IDS.includes(d.store_id))
+      : allDeals.filter(d=>d.category_id===cat.id);
     if(!catDeals.length) return;
     html+=`<div class="section"><div class="section-header"><div class="section-title-row"><span class="cat-dot" style="background:${cat.color}"></span><span class="section-title">${cat.name}</span></div><span class="see-all">Все →</span></div><div class="scroll-row">${catDeals.slice(0,12).map(d=>cardHTML(d)).join('')}</div></div>`;
   });
@@ -1118,7 +1121,7 @@ function initProfileToggles(){
     inp.addEventListener('change',()=>{const p=getProfile();p.notif[inp.dataset.notif]=inp.checked;saveProfile(p);});
   });
   document.querySelectorAll('[data-interest]').forEach(inp=>{
-    inp.addEventListener('change',()=>{const p=getProfile();p.interests[inp.dataset.interest]=inp.checked;saveProfile(p);checkAchievements();renderHome();});
+    inp.addEventListener('change',()=>{const p=getProfile();p.interests[inp.dataset.interest]=inp.checked;saveProfile(p);checkAchievements();renderCats();renderHome();});
   });
 }
 
