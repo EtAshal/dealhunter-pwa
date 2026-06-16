@@ -182,6 +182,45 @@ button{font-family:inherit}
 .search-results .card .card-img-wrap{height:160px}
 .search-hint{text-align:center;padding:60px 20px;color:var(--muted);font-size:14px}
 
+/* ── Detail: Verdict ── */
+.verdict{border-radius:var(--r-lg);padding:14px;margin-bottom:16px;border:1px solid}
+.verdict-header{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.verdict-icon{font-size:16px}
+.verdict-label{font-size:15px;font-weight:800}
+.verdict-compare{border-radius:var(--r-pill);padding:2px 8px;font-size:11px;font-weight:700}
+.verdict-desc{color:var(--text2);font-size:13px;line-height:18px}
+.verdict-stats{display:flex;gap:8px;margin-top:10px}
+.verdict-stat{flex:1;background:rgba(0,0,0,0.25);border-radius:var(--r-md);padding:10px;text-align:center}
+.verdict-stat-label{color:var(--muted);font-size:9px;font-weight:700;text-transform:uppercase;margin-bottom:4px}
+.verdict-stat-value{font-size:14px;font-weight:800}
+
+/* ── Detail: Price Chart ── */
+.price-chart{background:var(--card);border-radius:var(--r-lg);padding:14px;margin-bottom:16px;border:1px solid var(--border)}
+.price-chart-label{color:var(--text2);font-size:12px;font-weight:600;margin-bottom:10px}
+.price-chart svg{display:block;width:100%;height:auto}
+.price-chart-range{display:flex;justify-content:space-between;margin-top:8px}
+.price-chart-min{color:var(--accent);font-size:11px;font-weight:600}
+.price-chart-max{color:var(--muted);font-size:11px}
+
+/* ── Detail: Price Comparison ── */
+.price-comp{background:var(--card);border-radius:var(--r-lg);padding:14px;margin-bottom:16px;border:1px solid var(--border)}
+.price-comp-title{color:var(--text);font-size:14px;font-weight:700;margin-bottom:10px}
+.price-comp-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--border)}
+.price-comp-store{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.price-comp-info{flex:1;min-width:0}
+.price-comp-name{color:var(--muted);font-size:10px;font-weight:600;text-transform:uppercase}
+.price-comp-item{color:var(--text2);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.price-comp-price{text-align:right}
+.price-comp-val{font-size:14px;font-weight:800}
+.price-comp-val.cheaper{color:#4ADE80}
+.price-comp-diff{font-size:10px;font-weight:700;margin-top:1px}
+.price-comp-diff.save{color:#4ADE80}
+.price-comp-diff.more{color:var(--deal)}
+
+/* ── Detail: Disclaimer ── */
+.detail-disclaimer{color:var(--muted);font-size:11px;text-align:center;line-height:16px;margin-top:8px}
+.detail-note{color:var(--muted);font-size:10px;text-align:center;line-height:14px;font-style:italic;margin-top:4px}
+
 /* ── Loading ── */
 .loading{text-align:center;padding:60px 20px;color:var(--muted)}
 .spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
@@ -706,6 +745,65 @@ function renderWishlist(){
   body.innerHTML='<div class="grid-wrap" style="padding:0 16px 20px">'+deals.map(d=>cardHTML(d)).join('')+'</div>';
 }
 
+// ── Price Analyzer ──
+function analyzeDeal(d){
+  const ph=d.priceHistory;
+  if(!ph||ph.length<3) return null;
+  const hist=ph.slice(0,-1);
+  const avg=Math.round(hist.reduce((s,p)=>s+p,0)/hist.length);
+  const minP=Math.min(...hist);
+  const cur=d.price_current;
+  const realDisc=avg>0?Math.round((1-cur/avg)*100):0;
+  const claimed=d.discount||0;
+  const prev=ph[ph.length-2];
+  const prev2=ph.length>=3?ph[ph.length-3]:null;
+  if(prev2&&prev>prev2*1.15&&cur>=prev2*0.85) return {verdict:'fake',color:'#FF4D4D',bg:'#2A1414',border:'#FF4D4D44',icon:'🔴',label:'Фейковая скидка',desc:`Цену подняли перед акцией. Средняя цена была ${avg.toLocaleString('ru')} ₽.`,realDisc:Math.max(0,realDisc),avg,claimed};
+  if(cur>=avg*0.85&&cur<=avg*1.1) return {verdict:'normal',color:'#FFAB40',bg:'#2A1E0A',border:'#FFAB4044',icon:'🟡',label:'Обычная цена',desc:`Средняя цена — ${avg.toLocaleString('ru')} ₽. Реальная скидка ~${Math.max(0,realDisc)}%.`,realDisc:Math.max(0,realDisc),avg,claimed};
+  if(cur<avg*0.85){const isMin=cur<=minP;return {verdict:'real',color:'#00E676',bg:'#0D2010',border:'#00E67644',icon:'🟢',label:isMin?'Минимум за всё время!':'Реальная скидка',desc:isMin?`Самая низкая цена! Средняя — ${avg.toLocaleString('ru')} ₽, скидка ${realDisc}%.`:`Ниже средней (${avg.toLocaleString('ru')} ₽). Реальная скидка ${realDisc}%.`,realDisc,avg,claimed};}
+  return null;
+}
+
+function priceChartSVG(ph,currency){
+  if(!ph||ph.length<2) return '';
+  const max=Math.max(...ph),min=Math.min(...ph),range=max-min||1;
+  const W=280,H=60;
+  const pts=ph.map((p,i)=>({x:(i/(ph.length-1))*W,y:H-((p-min)/range)*(H-10)-5}));
+  let pathD='M'+pts.map(p=>`${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' L');
+  let dots=pts.map((p,i)=>`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${i===pts.length-1?5:3.5}" fill="${i===pts.length-1?'var(--accent)':'var(--card)'}" stroke="var(--accent)" stroke-width="2"/>`).join('');
+  return `<div class="price-chart"><div class="price-chart-label">📈 История цены</div><svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg"><path d="${pathD}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>${dots}</svg><div class="price-chart-range"><span class="price-chart-min">Мин: ${min.toLocaleString('ru')} ${currency||'₽'}</span><span class="price-chart-max">Макс: ${max.toLocaleString('ru')} ${currency||'₽'}</span></div></div>`;
+}
+
+function verdictHTML(a,currency){
+  if(!a) return '';
+  let statsHTML='';
+  if(a.avg){
+    statsHTML=`<div class="verdict-stats"><div class="verdict-stat"><div class="verdict-stat-label">Средняя</div><div class="verdict-stat-value" style="color:var(--text)">${a.avg.toLocaleString('ru')} ${currency||'₽'}</div></div><div class="verdict-stat"><div class="verdict-stat-label">Реальная скидка</div><div class="verdict-stat-value" style="color:${a.color}">${a.realDisc!=null?a.realDisc+'%':'—'}</div></div></div>`;
+  }
+  let compareHTML='';
+  if(a.claimed&&a.realDisc!=null&&a.claimed!==a.realDisc){
+    compareHTML=`<span class="verdict-compare" style="background:${a.color}22;color:${a.color}">${a.claimed}% → ${a.realDisc}%</span>`;
+  }
+  return `<div class="verdict" style="background:${a.bg};border-color:${a.border}"><div class="verdict-header"><span class="verdict-icon">${a.icon}</span><span class="verdict-label" style="color:${a.color}">${a.label}</span>${compareHTML}</div><div class="verdict-desc">${a.desc}</div>${statsHTML}</div>`;
+}
+
+function priceCompHTML(deal){
+  const STOP=new Set(['в','на','с','и','для','по','из','от','до','за','к','у','о','не','а','но','или','что','как','это','при','без','the','and','for','with','from']);
+  const words=(deal.title||'').replace(/[^\w\sа-яёА-ЯЁ]/gi,' ').split(/\s+/).filter(w=>w.length>=3&&!STOP.has(w.toLowerCase())).slice(0,4).map(w=>w.toLowerCase());
+  if(!words.length) return '';
+  const results=allDeals.filter(d=>d.id!==deal.id&&d.store_id!==deal.store_id&&d.price_current>0).map(d=>{
+    const dw=(d.title||'').toLowerCase();
+    const score=words.filter(w=>dw.includes(w)).length;
+    return {...d,score};
+  }).filter(d=>d.score>=2).sort((a,b)=>a.price_current-b.price_current).slice(0,5);
+  if(!results.length) return '';
+  return `<div class="price-comp"><div class="price-comp-title">🏪 Цены в других магазинах</div>${results.map(d=>{
+    const s=getStore(d.store_id);
+    const cheaper=d.price_current<deal.price_current;
+    const diff=deal.price_current-d.price_current;
+    return `<div class="price-comp-row" onclick="openDeal('${d.id}')"><div class="price-comp-store" style="background:${(s.color||'#333')}33">${s.logo}</div><div class="price-comp-info"><div class="price-comp-name">${s.name}</div><div class="price-comp-item">${d.title}</div></div><div class="price-comp-price"><div class="price-comp-val${cheaper?' cheaper':''}">${d.price_current.toLocaleString('ru')} ₽</div>${diff>0?`<div class="price-comp-diff save">−${diff.toLocaleString('ru')} ₽</div>`:diff<0?`<div class="price-comp-diff more">+${Math.abs(diff).toLocaleString('ru')} ₽</div>`:''}  </div></div>`;
+  }).join('')}</div>`;
+}
+
 // ── Deal Detail ──
 function openDeal(id){
   const d=allDeals.find(x=>x.id===id);
@@ -755,10 +853,14 @@ function openDeal(id){
       <div class="detail-price-row">${priceRow}</div>
       ${savingHTML}
       ${tagsHTML}
+      ${verdictHTML(analyzeDeal(d),d.currency)}
+      ${priceChartSVG(d.priceHistory,d.currency)}
+      ${priceCompHTML(d)}
       <div class="detail-actions">
         <button class="detail-btn detail-btn-primary" onclick="window.open('${d.url||'#'}','_blank')">Перейти к скидке →</button>
         <button class="detail-btn detail-btn-secondary detail-wish-btn${w?' wishlisted':''}" onclick="toggleWishlist('${id}')">${heartSVG(w)} ${w?'В избранном':'В избранное'}</button>
       </div>
+      <div class="detail-disclaimer">⚠️ Цены и скидки могут отличаться от указанных. Проверяйте актуальные цены на сайте магазина.</div>
     </div>`;
   document.getElementById('detailOverlay').classList.add('open');
   document.body.style.overflow='hidden';
