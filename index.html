@@ -12,6 +12,7 @@
 <link rel="icon" type="image/png" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <title>DealHunter - Скидки и акции</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -533,6 +534,78 @@ button{font-family:inherit}
 </div>
 
 <script>
+// ── Supabase Auth ──
+const SB_URL='https://api.dealhunterapp.online';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVsdGl5c2thZGJrcmRlbnp4eXltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExOTc5MjUsImV4cCI6MjA5Njc3MzkyNX0.GDkB8wycr616F5qsEf8Nzg_LA-YnmkhK9A6CbPE4Hco';
+const sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:true}});
+const TG_BOT='dealhunter_auth_bot';
+let authUser=null;
+let authProfile=null;
+
+async function loadAuthProfile(uid){
+  try{const{data}=await sb.from('user_profiles').select('*').eq('id',uid).single();authProfile=data;}catch{authProfile=null;}
+}
+async function createAuthProfile(uid,name){
+  const dn=name?.includes('@')?name.split('@')[0]:name||'Охотник';
+  try{const{data}=await sb.from('user_profiles').upsert({id:uid,display_name:dn,avatar_url:null,is_pro:false},{onConflict:'id'}).select().single();authProfile=data;}catch{authProfile={id:uid,display_name:dn};}
+}
+async function authSignUp(email,password){
+  const{data,error}=await sb.auth.signUp({email,password});
+  if(error)throw error;
+  const{error:e2}=await sb.auth.signInWithPassword({email,password});
+  if(e2)throw e2;
+  if(data.user){await createAuthProfile(data.user.id,email);}
+  return data;
+}
+async function authSignIn(email,password){
+  const{data,error}=await sb.auth.signInWithPassword({email,password});
+  if(error)throw error;
+  return data;
+}
+async function authSignOut(){
+  await sb.auth.signOut();
+  authUser=null;authProfile=null;
+  updateProfileUI();
+}
+async function authTelegram(){
+  const token=Math.random().toString(36).slice(2,10)+Date.now().toString(36);
+  await sb.from('telegram_auth').insert({token,status:'pending'});
+  window.open('https://t.me/'+TG_BOT+'?start='+token,'_blank');
+  return new Promise((resolve,reject)=>{
+    let att=0;
+    const iv=setInterval(async()=>{
+      att++;
+      try{
+        const{data}=await sb.from('telegram_auth').select('*').eq('token',token).single();
+        if(data?.status==='completed'&&data.telegram_id){
+          clearInterval(iv);
+          const email='tg_'+data.telegram_id+'@dealhunter.tg';
+          const pw='dh_tg_'+data.telegram_id+'_x8k2m';
+          const{error:siErr}=await sb.auth.signInWithPassword({email,password:pw});
+          if(siErr){
+            const{data:sud,error:suErr}=await sb.auth.signUp({email,password:pw});
+            if(suErr)throw suErr;
+            await sb.auth.signInWithPassword({email,password:pw});
+            if(sud.user)await createAuthProfile(sud.user.id,data.telegram_name||'Охотник');
+          }
+          resolve(data);
+        }
+      }catch(err){clearInterval(iv);reject(err);}
+      if(att>=30){clearInterval(iv);reject(new Error('Время ожидания истекло'));}
+    },2000);
+  });
+}
+
+sb.auth.getSession().then(({data:{session}})=>{
+  authUser=session?.user||null;
+  if(authUser)loadAuthProfile(authUser.id).then(()=>updateProfileUI());
+});
+sb.auth.onAuthStateChange((_ev,session)=>{
+  authUser=session?.user||null;
+  if(authUser)loadAuthProfile(authUser.id).then(()=>updateProfileUI());
+  else{authProfile=null;updateProfileUI();}
+});
+
 // data loaded from /data.json (static, no API proxy needed)
 
 const CATEGORIES = [
@@ -1092,7 +1165,7 @@ function updateProfileUI(){
   const av=document.querySelector('.prof-avatar');
   if(av) av.textContent=rank.emoji;
   const nm=document.querySelector('.prof-name');
-  if(nm) nm.textContent=p.userName||rank.name;
+  if(nm) nm.textContent=authProfile?.display_name||p.userName||rank.name;
   const rk=document.querySelector('.prof-rank');
   if(rk) rk.textContent=`Уровень ${RANKS.indexOf(rank)+1} • ${p.xp} XP`;
   const ach=el('profAchievements');
@@ -1108,8 +1181,15 @@ function updateProfileUI(){
   const accTitle=el('profAccountTitle');
   const accDesc=el('profAccountDesc');
   if(accTitle){
-    if(p.userName){accTitle.textContent=p.userName;accDesc.textContent=p.email||'Нажмите чтобы изменить';}
-    else{accTitle.textContent='Войти в аккаунт';accDesc.textContent='Сохрани список и получай уведомления';}
+    if(authUser){
+      const isTg=authUser.email?.endsWith('@dealhunter.tg');
+      accTitle.textContent=authProfile?.display_name||p.userName||'Охотник';
+      accDesc.textContent=isTg?'Вход через Telegram':authUser.email;
+    } else if(p.userName){
+      accTitle.textContent=p.userName;accDesc.textContent=p.email||'Нажмите чтобы изменить';
+    } else{
+      accTitle.textContent='Войти в аккаунт';accDesc.textContent='Сохрани список и получай уведомления';
+    }
   }
   // toggles
   document.querySelectorAll('[data-notif]').forEach(inp=>{inp.checked=p.notif[inp.dataset.notif]!==false;});
@@ -1416,59 +1496,135 @@ function showNotificationsModal(){
 
 // ── Account Modal ──
 function showAccountModal(){
-  const p=getProfile();
-  const rank=getRank(p.xp);
   const overlay=document.getElementById('detailOverlay');
   const modal=document.getElementById('detailModal');
-  modal.innerHTML=`
-    <div class="detail-img-wrap" style="background:var(--card);padding:30px 20px;padding-top:max(30px,env(safe-area-inset-top));text-align:center">
-      <div class="detail-back-btn" onclick="closeDeal()"><svg width="20" height="20" viewBox="0 0 512 512" fill="none" stroke="currentColor" stroke-width="48" stroke-linecap="round" stroke-linejoin="round"><polyline points="328 112 184 256 328 400"/></svg></div>
-      <div style="width:72px;height:72px;border-radius:36px;background:var(--accentGlow);border:3px solid var(--accent);display:flex;align-items:center;justify-content:center;font-size:36px;margin:10px auto">${rank.emoji}</div>
-      <div style="font-size:20px;font-weight:900;color:var(--text);margin-top:8px">${p.userName||'Охотник'}</div>
-      <div style="font-size:13px;color:var(--text2);margin-top:4px">${rank.emoji} ${rank.name} • Ур. ${RANKS.indexOf(rank)+1}</div>
-    </div>
-    <div class="detail-body" style="padding-top:16px">
-      <div style="margin-bottom:16px">
-        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Имя</div>
-        <input id="accName" type="text" value="${p.userName||''}" placeholder="Введите имя..." style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;color:var(--text);font-size:15px;outline:none">
+  if(authUser){
+    const p=getProfile();
+    const rank=getRank(p.xp);
+    const name=authProfile?.display_name||p.userName||'Охотник';
+    const email=authUser.email||'';
+    const isTg=email.endsWith('@dealhunter.tg');
+    modal.innerHTML=`
+      <div class="detail-img-wrap" style="background:var(--card);padding:30px 20px;padding-top:max(30px,env(safe-area-inset-top));text-align:center">
+        <div class="detail-back-btn" onclick="closeDeal()"><svg width="20" height="20" viewBox="0 0 512 512" fill="none" stroke="currentColor" stroke-width="48" stroke-linecap="round" stroke-linejoin="round"><polyline points="328 112 184 256 328 400"/></svg></div>
+        <div style="width:72px;height:72px;border-radius:36px;background:var(--accentGlow);border:3px solid var(--accent);display:flex;align-items:center;justify-content:center;font-size:36px;margin:10px auto">${rank.emoji}</div>
+        <div style="font-size:20px;font-weight:900;color:var(--text);margin-top:8px">${name}</div>
+        <div style="font-size:13px;color:var(--text2);margin-top:4px">${isTg?'Telegram':'✉️ '+email}</div>
+        <div style="font-size:12px;color:var(--accent);margin-top:4px">${rank.emoji} ${rank.name} • Ур. ${RANKS.indexOf(rank)+1}</div>
       </div>
-      <div style="margin-bottom:20px">
-        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Email</div>
-        <input id="accEmail" type="email" value="${p.email||''}" placeholder="mail@example.com" style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;color:var(--text);font-size:15px;outline:none">
-      </div>
-      <button onclick="saveAccount()" style="background:var(--accent);color:#fff;border:none;border-radius:var(--r-md);padding:14px;font-size:15px;font-weight:700;cursor:pointer;width:100%;margin-bottom:16px">Сохранить</button>
-      <div class="prof-toggles-card">
-        <div class="prof-toggle-row" style="cursor:pointer" onclick="showAchievementsModal()">
-          <span class="prof-toggle-icon">🏆</span>
-          <span class="prof-toggle-label">Достижения (${p.unlocked.length}/${ACHIEVEMENTS.length})</span>
-          <span style="color:var(--muted);font-size:18px">›</span>
+      <div class="detail-body" style="padding-top:16px">
+        <div class="prof-toggles-card">
+          <div class="prof-toggle-row" style="cursor:pointer" onclick="showAchievementsModal()">
+            <span class="prof-toggle-icon">🏆</span>
+            <span class="prof-toggle-label">Достижения (${p.unlocked.length}/${ACHIEVEMENTS.length})</span>
+            <span style="color:var(--muted);font-size:18px">›</span>
+          </div>
+          <div class="prof-toggle-row">
+            <span class="prof-toggle-icon">🔥</span>
+            <span class="prof-toggle-label">Стрик: ${p.streak} дн</span>
+            <span style="color:var(--accent);font-size:13px;font-weight:700">${p.xp} XP</span>
+          </div>
+          <div class="prof-toggle-row">
+            <span class="prof-toggle-icon">💰</span>
+            <span class="prof-toggle-label">Сэкономлено</span>
+            <span style="color:#4ADE80;font-size:13px;font-weight:700">${calcSaved().toLocaleString('ru')} ₽</span>
+          </div>
         </div>
-        <div class="prof-toggle-row">
-          <span class="prof-toggle-icon">🔥</span>
-          <span class="prof-toggle-label">Стрик: ${p.streak} дн</span>
-          <span style="color:var(--accent);font-size:13px;font-weight:700">${p.xp} XP</span>
+        <div style="text-align:center;margin-top:20px"><span style="color:var(--deal);font-size:13px;cursor:pointer" onclick="if(confirm('Выйти из аккаунта?')){authSignOut();closeDeal();}">Выйти из аккаунта</span></div>
+      </div>`;
+  } else {
+    modal.innerHTML=`
+      <div style="padding:20px;padding-top:max(20px,env(safe-area-inset-top));display:flex;flex-direction:column;min-height:100%">
+        <div class="detail-back-btn" onclick="closeDeal()"><svg width="20" height="20" viewBox="0 0 512 512" fill="none" stroke="currentColor" stroke-width="48" stroke-linecap="round" stroke-linejoin="round"><polyline points="328 112 184 256 328 400"/></svg></div>
+        <div id="authMain" style="flex:1;display:flex;flex-direction:column;justify-content:space-between;padding-top:40px">
+          <div style="text-align:center">
+            <div style="width:72px;height:72px;border-radius:20px;background:var(--accentGlow);border:2px solid rgba(139,92,246,0.3);display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 16px">⚡</div>
+            <div style="font-size:28px;font-weight:900;color:var(--text);letter-spacing:-0.5px">DealHunter</div>
+            <div style="font-size:14px;color:var(--text2);margin-top:4px">Охотник за лучшими скидками России</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:12px;margin:24px 0">
+            <div style="display:flex;align-items:center;gap:14px"><div style="width:36px;height:36px;border-radius:10px;background:var(--accentGlow);display:flex;align-items:center;justify-content:center;font-size:16px">☁️</div><span style="color:var(--text2);font-size:14px">Список желаний в облаке</span></div>
+            <div style="display:flex;align-items:center;gap:14px"><div style="width:36px;height:36px;border-radius:10px;background:var(--accentGlow);display:flex;align-items:center;justify-content:center;font-size:16px">🔔</div><span style="color:var(--text2);font-size:14px">Push-уведомления о скидках</span></div>
+            <div style="display:flex;align-items:center;gap:14px"><div style="width:36px;height:36px;border-radius:10px;background:var(--accentGlow);display:flex;align-items:center;justify-content:center;font-size:16px">🔄</div><span style="color:var(--text2);font-size:14px">Синхронизация между устройствами</span></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <button onclick="showEmailAuth('signup')" style="display:flex;align-items:center;justify-content:center;gap:10px;padding:16px;background:var(--accent);color:#fff;border:none;border-radius:var(--r-lg);font-size:16px;font-weight:700;cursor:pointer;width:100%">👤 Создать аккаунт</button>
+            <button onclick="showEmailAuth('signin')" style="display:flex;align-items:center;justify-content:center;gap:10px;padding:16px;background:var(--accentGlow);color:var(--accent);border:1px solid rgba(139,92,246,0.3);border-radius:var(--r-lg);font-size:16px;font-weight:700;cursor:pointer;width:100%">🔑 Уже есть аккаунт</button>
+            <div style="display:flex;align-items:center;gap:12px;margin:2px 0"><div style="flex:1;height:1px;background:var(--border)"></div><span style="color:var(--muted);font-size:13px">или</span><div style="flex:1;height:1px;background:var(--border)"></div></div>
+            <button id="tgAuthBtn" onclick="handleTgAuth()" style="display:flex;align-items:center;justify-content:center;gap:10px;padding:16px;background:#0088CC;color:#fff;border:none;border-radius:var(--r-lg);font-size:16px;font-weight:700;cursor:pointer;width:100%">✈️ Войти через Telegram</button>
+          </div>
+          <div style="text-align:center;margin-top:16px"><span style="color:var(--muted);font-size:13px;cursor:pointer" onclick="closeDeal()">Продолжить без аккаунта →</span></div>
         </div>
-        <div class="prof-toggle-row">
-          <span class="prof-toggle-icon">💰</span>
-          <span class="prof-toggle-label">Сэкономлено</span>
-          <span style="color:#4ADE80;font-size:13px;font-weight:700">${calcSaved().toLocaleString('ru')} ₽</span>
+        <div id="authEmail" style="display:none;padding-top:20px">
+          <div style="cursor:pointer;display:flex;align-items:center;gap:4px;margin-bottom:16px" onclick="document.getElementById('authMain').style.display='flex';document.getElementById('authEmail').style.display='none'"><span style="color:var(--text2);font-size:14px">← Назад</span></div>
+          <div id="authEmailTitle" style="font-size:24px;font-weight:800;color:var(--text);margin-bottom:4px"></div>
+          <div id="authEmailHint" style="font-size:14px;color:var(--text2);margin-bottom:16px"></div>
+          <div style="display:flex;align-items:center;gap:12px;background:var(--card);border:1.5px solid var(--border);border-radius:var(--r-lg);padding:4px 16px;margin-bottom:12px">
+            <span style="color:var(--muted);font-size:18px">✉️</span>
+            <input id="authEmailInput" type="email" placeholder="email@example.com" autocomplete="email" style="flex:1;background:none;border:none;color:var(--text);font-size:16px;font-weight:500;padding:14px 0;outline:none">
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;background:var(--card);border:1.5px solid var(--border);border-radius:var(--r-lg);padding:4px 16px;margin-bottom:16px">
+            <span style="color:var(--muted);font-size:18px">🔒</span>
+            <input id="authPassInput" type="password" placeholder="Пароль (минимум 6 символов)" style="flex:1;background:none;border:none;color:var(--text);font-size:16px;font-weight:500;padding:14px 0;outline:none">
+            <span style="cursor:pointer;color:var(--muted);font-size:18px" onclick="const i=document.getElementById('authPassInput');i.type=i.type==='password'?'text':'password'">👁️</span>
+          </div>
+          <div id="authError" style="color:var(--deal);font-size:13px;margin-bottom:8px;display:none"></div>
+          <button id="authSubmitBtn" onclick="handleEmailSubmit()" style="display:flex;align-items:center;justify-content:center;gap:10px;padding:16px;background:var(--accent);color:#fff;border:none;border-radius:var(--r-lg);font-size:16px;font-weight:700;cursor:pointer;width:100%"></button>
         </div>
-      </div>
-      ${p.userName?`<div style="text-align:center;margin-top:16px"><span style="color:var(--deal);font-size:13px;cursor:pointer" onclick="if(confirm('Выйти из аккаунта?')){let q=getProfile();delete q.userName;delete q.email;saveProfile(q);updateProfileUI();closeDeal()}">Выйти из аккаунта</span></div>`:''}
-    </div>`;
+      </div>`;
+  }
   overlay.classList.add('open');
   document.body.style.overflow='hidden';
 }
-function saveAccount(){
-  const p=getProfile();
-  const name=document.getElementById('accName').value.trim();
-  const email=document.getElementById('accEmail').value.trim();
-  if(name) p.userName=name;
-  if(email) p.email=email;
-  saveProfile(p);
-  updateProfileUI();
-  showXPToast(0,'Профиль сохранён');
-  closeDeal();
+
+let currentAuthMode='signup';
+function showEmailAuth(mode){
+  currentAuthMode=mode;
+  document.getElementById('authMain').style.display='none';
+  const emailDiv=document.getElementById('authEmail');
+  emailDiv.style.display='block';
+  document.getElementById('authEmailTitle').textContent=mode==='signup'?'Создать аккаунт':'Войти';
+  document.getElementById('authEmailHint').textContent=mode==='signup'?'Сохрани список скидок и получай уведомления':'Рады видеть снова!';
+  document.getElementById('authSubmitBtn').textContent=mode==='signup'?'Зарегистрироваться':'Войти';
+  document.getElementById('authError').style.display='none';
+}
+
+async function handleEmailSubmit(){
+  const email=document.getElementById('authEmailInput').value.trim().toLowerCase();
+  const pass=document.getElementById('authPassInput').value.trim();
+  const errEl=document.getElementById('authError');
+  const btn=document.getElementById('authSubmitBtn');
+  if(!email||!email.includes('@')){errEl.textContent='Введите корректный email';errEl.style.display='block';return;}
+  if(pass.length<6){errEl.textContent='Пароль должен быть не менее 6 символов';errEl.style.display='block';return;}
+  errEl.style.display='none';
+  btn.textContent='Загрузка...';btn.disabled=true;
+  try{
+    if(currentAuthMode==='signup'){await authSignUp(email,pass);}
+    else{await authSignIn(email,pass);}
+    const p=getProfile();p.userName=authProfile?.display_name||email.split('@')[0];p.email=email;saveProfile(p);
+    updateProfileUI();showXPToast(0,'Вы вошли!');closeDeal();
+  }catch(err){
+    let msg=err.message;
+    if(msg.includes('Invalid login'))msg='Неверный email или пароль';
+    else if(msg.includes('already registered'))msg='Email уже зарегистрирован. Попробуйте войти.';
+    errEl.textContent=msg;errEl.style.display='block';
+  }finally{
+    btn.textContent=currentAuthMode==='signup'?'Зарегистрироваться':'Войти';btn.disabled=false;
+  }
+}
+
+async function handleTgAuth(){
+  const btn=document.getElementById('tgAuthBtn');
+  btn.textContent='Ожидание...';btn.disabled=true;
+  try{
+    const data=await authTelegram();
+    const p=getProfile();p.userName=data.telegram_name||'Охотник';saveProfile(p);
+    updateProfileUI();showXPToast(0,'Вы вошли через Telegram!');closeDeal();
+  }catch(err){
+    alert(err.message||'Не удалось войти через Telegram');
+  }finally{
+    btn.textContent='✈️ Войти через Telegram';btn.disabled=false;
+  }
 }
 
 function renderWishlist(){
