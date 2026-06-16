@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0C0F1D">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" type="image/png" href="/icons/icon-192.png">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<title>DealHunter - Скидки и акции</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0C0F1D;--card:#161A30;--card2:#1E2240;--tag:#1E1644;
+  --accent:#8B5CF6;--accentDim:#6D28D9;--accentGlow:rgba(139,92,246,0.15);
+  --deal:#FB7185;--dealBg:#2D1A22;
+  --text:#F0F0FF;--text2:#8B90B8;--muted:#4A4F72;
+  --border:#252A4A;--borderL:#2E3358;
+  --catGames:#8B5CF6;--catClothes:#FB7185;--catMarket:#34D399;
+  --catTravel:#F59E0B;--catTech:#38BDF8;
+  --r-sm:8px;--r-md:12px;--r-lg:16px;--r-xl:24px;--r-pill:100px;
+}
+html{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',Roboto,sans-serif;-webkit-font-smoothing:antialiased;height:100%;overflow:hidden;display:flex;flex-direction:column}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit}
+
+/* ── App Shell ── */
+.app{display:flex;flex-direction:column;height:100%;max-width:480px;margin:0 auto;width:100%}
+@media(min-width:481px){.app{border-left:1px solid var(--border);border-right:1px solid var(--border)}}
+.main-scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding-bottom:20px}
+
+/* ── Header ── */
+.header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;padding-top:max(12px,env(safe-area-inset-top))}
+.header-left{display:flex;align-items:center;gap:10px}
+.header-logo{width:38px;height:38px;border-radius:10px}
+.header-text h1{font-size:22px;font-weight:900;letter-spacing:-0.5px;color:var(--text)}
+.header-text p{font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--accent)}
+.header-btns{display:flex;gap:8px}
+.header-btn{width:40px;height:40px;border-radius:20px;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text);font-size:18px}
+
+/* ── Categories ── */
+.cats-wrap{background:var(--bg);padding:10px 0;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50}
+.cats{display:flex;gap:8px;padding:0 16px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.cats::-webkit-scrollbar{display:none}
+.cat-chip{flex-shrink:0;display:flex;align-items:center;gap:5px;background:var(--card);border-radius:var(--r-pill);padding:7px 12px;border:1px solid var(--border);cursor:pointer;transition:.2s;color:var(--muted);font-size:13px;font-weight:600}
+.cat-chip.active{background:var(--accentGlow);border-color:rgba(139,92,246,0.4)}
+.cat-chip.active .cat-icon{color:var(--accent)}
+.cat-chip.active .cat-label{color:var(--accent)}
+.cat-icon{font-size:12px}
+.cat-label{font-size:13px;font-weight:600}
+
+/* ── Deal of the Day ── */
+.dotd{margin:16px;border-radius:var(--r-lg);overflow:hidden;border:1.5px solid rgba(255,109,0,0.4);background:var(--card);cursor:pointer;transition:transform .15s}
+.dotd:active{transform:scale(.97)}
+.dotd-header{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#1A1530;border-bottom:1px solid rgba(255,109,0,0.2)}
+.dotd-badge{color:#FF9100;font-weight:900;font-size:13px;letter-spacing:1px}
+.dotd-timer{display:flex;align-items:center;gap:2px}
+.timer-digit{background:rgba(255,109,0,0.13);border-radius:6px;padding:3px 6px;min-width:30px;text-align:center}
+.timer-num{color:#FF9100;font-weight:900;font-size:16px;font-variant-numeric:tabular-nums}
+.timer-label{color:rgba(255,109,0,0.53);font-size:8px;font-weight:700;text-align:center;margin-top:1px}
+.timer-colon{color:rgba(255,109,0,0.4);font-weight:900;font-size:16px;margin:0 1px 10px}
+.dotd-content{display:flex;padding:14px;gap:14px}
+.dotd-store-icon{width:72px;height:72px;border-radius:var(--r-md);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.dotd-store-emoji{font-size:28px}
+.dotd-store-name{color:var(--text2);font-size:9px;font-weight:700;text-transform:uppercase}
+.dotd-info{flex:1;display:flex;flex-direction:column;gap:4px}
+.dotd-title{color:var(--text);font-size:16px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dotd-subtitle{color:var(--text2);font-size:12px}
+.dotd-prices{display:flex;align-items:center;gap:8px;margin-top:4px}
+.dotd-price{color:var(--accent);font-size:20px;font-weight:900}
+.dotd-old{color:var(--muted);font-size:13px;text-decoration:line-through}
+.dotd-chips{display:flex;gap:8px;margin-top:4px}
+.dotd-saving{background:var(--accentGlow);border-radius:var(--r-pill);padding:3px 8px;color:var(--accent);font-size:11px;font-weight:700}
+.dotd-disc{background:var(--deal);border-radius:var(--r-pill);padding:3px 8px;color:#fff;font-size:11px;font-weight:800}
+.dotd-urgency{height:26px;background:#1A1530;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.dotd-urgency-fill{position:absolute;left:0;top:0;bottom:0;width:100%;background:rgba(255,109,0,0.08)}
+.dotd-urgency-text{color:#FF9100;font-size:11px;font-weight:700;position:relative}
+
+/* ── LiveFeed ── */
+.livefeed{margin:16px;background:var(--card);border-radius:var(--r-lg);padding:14px;border:1px solid var(--border)}
+.livefeed-header{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.live-dot{width:8px;height:8px;border-radius:4px;background:var(--deal);animation:pulse-dot 2s infinite}
+@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.4}}
+.livefeed-title{color:var(--text);font-size:14px;font-weight:800}
+.feed-item{display:flex;align-items:center;gap:10px;padding:6px 4px;border-bottom:1px solid var(--border);transition:opacity .3s}
+.feed-item:last-child{border-bottom:none}
+.feed-emoji{font-size:22px;width:32px;text-align:center;flex-shrink:0}
+.feed-content{flex:1;min-width:0}
+.feed-text{color:var(--text2);font-size:12px;line-height:17px}
+.feed-name{color:var(--text);font-weight:700}
+.feed-time{color:var(--muted);font-size:10px;margin-top:2px}
+
+/* ── Section ── */
+.section{margin-top:24px}
+.section-header{display:flex;justify-content:space-between;align-items:center;padding:0 16px;margin-bottom:12px}
+.section-title-row{display:flex;align-items:center;gap:8px}
+.cat-dot{width:8px;height:8px;border-radius:4px}
+.section-title{color:var(--text);font-size:17px;font-weight:800}
+.see-all{color:var(--accent);font-size:13px;font-weight:600;cursor:pointer}
+.scroll-row{display:flex;gap:12px;padding:0 16px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.scroll-row::-webkit-scrollbar{display:none}
+.grid-wrap{display:flex;flex-wrap:wrap;padding:0 16px;gap:12px}
+.grid-wrap .card{width:calc(50% - 6px)}
+
+/* ── Deal Card ── */
+.card{background:var(--card);border-radius:var(--r-lg);overflow:hidden;border:1px solid var(--border);flex-shrink:0;width:200px;cursor:pointer;transition:transform .15s;display:block}
+.card:active{transform:scale(.96)}
+.card-img-wrap{height:140px;position:relative;overflow:hidden}
+.card-img{width:100%;height:100%;object-fit:cover;display:block}
+.card-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:48px}
+.card-badge{position:absolute;top:10px;left:10px;border-radius:var(--r-sm);padding:3px 8px;color:#fff;font-weight:800;font-size:12px}
+.card-badge.discount{background:var(--deal)}
+.card-badge.free{background:var(--accent)}
+.card-badge.flight{background:#FF6D00}
+.card-badge.promo{background:#00B0FF}
+.card-heart{position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.5);border-radius:20px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px}
+.card-timer{position:absolute;bottom:8px;right:10px;display:flex;align-items:center;gap:3px;background:rgba(0,0,0,0.6);border-radius:var(--r-pill);padding:3px 7px}
+.card-timer-text{color:var(--text2);font-size:10px;font-weight:600}
+.card-info{padding:12px;display:flex;flex-direction:column;gap:3px}
+.card-store-row{display:flex;align-items:center;justify-content:space-between}
+.card-store{color:var(--text2);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.card-hot{background:#2A1E0A;border-radius:var(--r-pill);padding:1px 6px;font-size:10px;color:var(--catTravel)}
+.card-title{color:var(--text);font-size:14px;font-weight:700;line-height:19px;margin-top:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.card-subtitle{color:var(--text2);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.card-prices{display:flex;align-items:center;gap:8px;margin-top:6px}
+.card-price-current{color:var(--accent);font-size:16px;font-weight:800}
+.card-price-current.travel{color:var(--catTravel)}
+.card-price-old{color:var(--muted);font-size:12px;text-decoration:line-through}
+
+/* ── Bottom Tabs ── */
+.tab-bar{display:flex;background:#0A0D1A;border-top:1px solid var(--border);padding:4px 0 max(14px, env(safe-area-inset-bottom));flex-shrink:0}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;cursor:pointer;color:var(--muted);transition:.2s}
+.tab.active{color:var(--accent)}
+.tab-icon{font-size:22px;line-height:1}
+.tab-label{font-size:9px;font-weight:600}
+
+/* ── Search Screen ── */
+.search-screen{display:none;flex:1;flex-direction:column;overflow:hidden}
+.search-screen.active{display:flex}
+.search-bar{padding:16px;padding-top:max(16px,env(safe-area-inset-top))}
+.search-input{width:100%;background:var(--card2);border:1px solid var(--border);border-radius:var(--r-md);padding:12px 16px 12px 40px;color:var(--text);font-size:15px;outline:none}
+.search-input::placeholder{color:var(--muted)}
+.search-input:focus{border-color:var(--accent)}
+.search-icon{position:absolute;left:30px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:16px}
+.search-results{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 16px 20px}
+.search-results .card{width:100%;margin-bottom:12px}
+.search-results .card .card-img-wrap{height:160px}
+.search-hint{text-align:center;padding:60px 20px;color:var(--muted);font-size:14px}
+
+/* ── Loading ── */
+.loading{text-align:center;padding:60px 20px;color:var(--muted)}
+.spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── Install Banner ── */
+.install-banner{display:none;position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--accent);padding:12px 20px;border-radius:var(--r-lg);z-index:200;white-space:nowrap}
+.install-banner.show{display:block}
+.install-btn{background:var(--accent);color:#fff;border:none;padding:10px 20px;border-radius:var(--r-md);font-size:14px;font-weight:700;cursor:pointer}
+
+/* ── Wishlist Screen ── */
+.wishlist-screen,.profile-screen{display:none;flex:1;flex-direction:column;overflow:hidden}
+.wishlist-screen.active,.profile-screen.active{display:flex}
+.screen-header{padding:16px;padding-top:max(16px,env(safe-area-inset-top));border-bottom:1px solid var(--border)}
+.screen-header h2{font-size:20px;font-weight:800;color:var(--text)}
+.screen-header p{font-size:12px;color:var(--muted);margin-top:2px}
+.screen-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px}
+.empty-state{text-align:center;padding:60px 20px;color:var(--muted)}
+.empty-state .empty-icon{font-size:48px;margin-bottom:12px}
+.empty-state p{font-size:14px}
+
+/* ── Profile Screen ── */
+.profile-card{background:var(--card);border-radius:var(--r-lg);padding:20px;border:1px solid var(--border);text-align:center;margin-bottom:16px}
+.profile-avatar{width:64px;height:64px;border-radius:32px;background:var(--accentGlow);display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 12px;border:2px solid var(--accent)}
+.profile-name{font-size:18px;font-weight:800;color:var(--text)}
+.profile-sub{font-size:12px;color:var(--text2);margin-top:4px}
+.profile-stats{display:flex;justify-content:center;gap:24px;margin-top:16px}
+.profile-stat{text-align:center}
+.profile-stat-num{font-size:20px;font-weight:900;color:var(--accent)}
+.profile-stat-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.profile-menu{display:flex;flex-direction:column;gap:2px}
+.profile-menu-item{display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--card);border-radius:var(--r-md);border:1px solid var(--border);cursor:pointer}
+.profile-menu-item:active{background:var(--card2)}
+.profile-menu-icon{font-size:20px;width:28px;text-align:center}
+.profile-menu-text{flex:1;font-size:14px;font-weight:600;color:var(--text)}
+.profile-menu-arrow{color:var(--muted);font-size:14px}
+.profile-footer{text-align:center;padding:24px;color:var(--muted);font-size:12px;margin-top:16px}
+.profile-footer a{color:var(--accent)}
+
+/* Desktop */
+@media(min-width:481px){
+  body{background:#06080F}
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- ═══ HOME SCREEN ═══ -->
+  <div id="homeScreen" style="display:flex;flex-direction:column;flex:1;overflow:hidden">
+    <div class="header">
+      <div class="header-left">
+        <img class="header-logo" src="/icons/icon-192.png" alt="DH">
+        <div class="header-text">
+          <h1>DealHunter</h1>
+          <p>Лучшие скидки России</p>
+        </div>
+      </div>
+      <div class="header-btns">
+        <div class="header-btn" title="История">🕐</div>
+        <div class="header-btn" title="Уведомления">🔔</div>
+      </div>
+    </div>
+
+    <div class="cats-wrap">
+      <div class="cats" id="cats"></div>
+    </div>
+
+    <div class="main-scroll" id="mainScroll">
+      <div id="content">
+        <div class="loading"><div class="spinner"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SEARCH SCREEN ═══ -->
+  <div id="searchScreen" class="search-screen">
+    <div class="search-bar" style="position:relative">
+      <span class="search-icon">🔍</span>
+      <input class="search-input" id="searchInput" type="text" placeholder="Найти скидку..." autocomplete="off">
+    </div>
+    <div class="search-results" id="searchResults">
+      <div class="search-hint">Введите название товара, игры или магазина</div>
+    </div>
+  </div>
+
+  <!-- ═══ WISHLIST SCREEN ═══ -->
+  <div id="wishlistScreen" class="wishlist-screen">
+    <div class="screen-header">
+      <h2>❤️ Избранное</h2>
+      <p>Сохранённые скидки</p>
+    </div>
+    <div class="screen-body">
+      <div class="empty-state">
+        <div class="empty-icon">💜</div>
+        <p>Нажмите ♡ на карточке скидки,<br>чтобы сохранить её сюда</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ PROFILE SCREEN ═══ -->
+  <div id="profileScreen" class="profile-screen">
+    <div class="screen-header">
+      <h2>Профиль</h2>
+    </div>
+    <div class="screen-body">
+      <div class="profile-card">
+        <div class="profile-avatar">🎯</div>
+        <div class="profile-name">Охотник за скидками</div>
+        <div class="profile-sub">Уровень 1 — Новичок</div>
+        <div class="profile-stats">
+          <div class="profile-stat"><div class="profile-stat-num" id="statDeals">0</div><div class="profile-stat-label">Скидок</div></div>
+          <div class="profile-stat"><div class="profile-stat-num" id="statSaved">0</div><div class="profile-stat-label">Избранное</div></div>
+          <div class="profile-stat"><div class="profile-stat-num" id="statStores">0</div><div class="profile-stat-label">Магазинов</div></div>
+        </div>
+      </div>
+      <div class="profile-menu">
+        <div class="profile-menu-item"><span class="profile-menu-icon">🏆</span><span class="profile-menu-text">Достижения</span><span class="profile-menu-arrow">›</span></div>
+        <div class="profile-menu-item"><span class="profile-menu-icon">🔔</span><span class="profile-menu-text">Уведомления</span><span class="profile-menu-arrow">›</span></div>
+        <div class="profile-menu-item"><span class="profile-menu-icon">⭐</span><span class="profile-menu-text">DealHunter Pro</span><span class="profile-menu-arrow">›</span></div>
+        <div class="profile-menu-item"><span class="profile-menu-icon">📱</span><span class="profile-menu-text">Скачать приложение</span><span class="profile-menu-arrow">›</span></div>
+      </div>
+      <div class="profile-footer">
+        <p>DealHunter v1.0</p>
+        <p style="margin-top:4px"><a href="https://dealhunterapp.online">dealhunterapp.online</a></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB BAR ═══ -->
+  <div class="tab-bar">
+    <div class="tab active" data-tab="home"><div class="tab-icon">⚡</div><div class="tab-label">Скидки</div></div>
+    <div class="tab" data-tab="search"><div class="tab-icon">🔍</div><div class="tab-label">Поиск</div></div>
+    <div class="tab" data-tab="wishlist"><div class="tab-icon">♡</div><div class="tab-label">Список</div></div>
+    <div class="tab" data-tab="profile"><div class="tab-icon">👤</div><div class="tab-label">Профиль</div></div>
+  </div>
+</div>
+
+<div class="install-banner" id="installBanner">
+  <button class="install-btn" id="installBtn">📲 Установить DealHunter</button>
+</div>
+
+<script>
+// data loaded from /data.json (static, no API proxy needed)
+
+const CATEGORIES = [
+  {id:'all',name:'Все',icon:'✨',color:'#8B5CF6'},
+  {id:'games',name:'Игры',icon:'🎮',color:'#7C4DFF'},
+  {id:'clothes',name:'Одежда',icon:'👗',color:'#FB7185'},
+  {id:'market',name:'Маркетплейсы',icon:'🛒',color:'#34D399'},
+  {id:'travel',name:'Путешествия',icon:'✈️',color:'#F59E0B'},
+  {id:'tech',name:'Электроника',icon:'💻',color:'#38BDF8'},
+];
+
+const STORES = {
+  steam:{name:'Steam',logo:'🎮',color:'#1B2838'},
+  epicgames:{name:'Epic Games',logo:'⚡',color:'#2C2C2C'},
+  ggsel:{name:'GGSel',logo:'🎯',color:'#1A1A2E'},
+  mts:{name:'МТС',logo:'📱',color:'#E30611'},
+  wildberries:{name:'Wildberries',logo:'🍇',color:'#A63284'},
+  ozon:{name:'Ozon',logo:'🔵',color:'#005BFF'},
+  aviasales:{name:'Aviasales',logo:'✈️',color:'#FF6D00'},
+  avitotravel:{name:'Avito Travel',logo:'🏠',color:'#00AAFF'},
+  yandextravel:{name:'Яндекс Путешествия',logo:'🟡',color:'#FC3F1D'},
+  yandexmarket:{name:'Яндекс Маркет',logo:'🟡',color:'#FC3F1D'},
+  aliexpress:{name:'AliExpress',logo:'🛍️',color:'#E43225'},
+  kupikod:{name:'Купикод',logo:'🔑',color:'#FF9800'},
+  lamoda:{name:'Lamoda',logo:'👗',color:'#1A1A1A'},
+  dns:{name:'DNS',logo:'💻',color:'#E31E24'},
+};
+
+const MARKETPLACE_IDS = ['wildberries','ozon','yandexmarket','sbermegamarket','aliexpress'];
+
+const NAMES = ['Анна','Дмитрий','Мария','Алексей','Екатерина','Иван','Ольга','Максим','Наталья','Артём','Юлия','Сергей','Елена','Андрей','Виктория','Никита','Татьяна','Павел'];
+const FEED_ACTIONS = {
+  steam:['открыл(а) скидку','смотрит игру'],epicgames:['забрал(а) бесплатную игру','смотрит скидку'],
+  ggsel:['смотрит ключ','перешёл(а) к покупке'],mts:['смотрит гаджет'],wildberries:['смотрит товар'],
+  ozon:['смотрит товар'],aviasales:['ищет билеты','сравнивает цены'],
+  avitotravel:['ищет жильё'],yandextravel:['ищет отель'],
+};
+
+let allDeals = [];
+let activeCategory = 'all';
+let activeTab = 'home';
+let feedEvents = [];
+let feedTimer = null;
+
+function rand(arr){return arr[Math.floor(Math.random()*arr.length)]}
+function getStore(id){return STORES[id]||{name:id,logo:'🏷️',color:'#333'}}
+
+// ── Fetch ──
+async function fetchData(){
+  const r = await fetch('/data.json?v=' + Date.now());
+  if(!r.ok) throw new Error(r.status);
+  return r.json();
+}
+
+async function fetchDeals(){
+  const data = await fetchData();
+  window._cachedClicks = data.clicks || [];
+  return data.deals;
+}
+
+async function fetchClicks(){
+  return window._cachedClicks || [];
+}
+
+// ── Time helpers ──
+function timeLeft(endsAt){
+  const d=new Date(endsAt)-new Date();
+  if(d<=0) return null;
+  const h=Math.floor(d/3600000),m=Math.floor((d%3600000)/60000);
+  if(h>24) return Math.floor(h/24)+'д';
+  return h+'ч '+m+'м';
+}
+
+function timeAgo(dateStr){
+  const d=Date.now()-new Date(dateStr).getTime();
+  const m=Math.floor(d/60000);
+  if(m<1) return 'только что';
+  if(m<60) return m+' мин назад';
+  return Math.floor(m/60)+'ч назад';
+}
+
+// ── Card HTML ──
+function cardHTML(d, extraClass=''){
+  const store=getStore(d.store_id);
+  const isFlight = d.category_id==='travel' && d.store_id==='aviasales';
+  const isPromo = d.is_promo;
+  const tl = timeLeft(d.ends_at);
+
+  let badgeHTML='';
+  if(isPromo) badgeHTML='<div class="card-badge promo">Перейти</div>';
+  else if(d.is_free||d.price_current===0) badgeHTML='<div class="card-badge free">FREE</div>';
+  else if(isFlight && d.price_current) badgeHTML=`<div class="card-badge flight">от ${d.price_current.toLocaleString('ru')} ₽</div>`;
+  else if(d.discount>0) badgeHTML=`<div class="card-badge discount">-${d.discount}%</div>`;
+
+  const imgHTML = d.image
+    ? `<img class="card-img" src="${d.image}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+    : '';
+  const placeholderStyle = d.image ? 'display:none' : 'display:flex';
+  const bgColor = (store.color||'#333')+'33';
+
+  let priceHTML='';
+  if(isPromo){
+    priceHTML=`<span class="card-price-current travel">Партнёр →</span>`;
+  } else if(d.is_free||d.price_current===0){
+    priceHTML=`<span class="card-price-current">Бесплатно</span>`;
+  } else if(isFlight && d.price_current){
+    priceHTML=`<span class="card-price-current travel">✈️ ${d.price_current.toLocaleString('ru')} ${d.currency||'₽'}</span>`;
+  } else if(d.price_current){
+    priceHTML=`<span class="card-price-current">${d.price_current.toLocaleString('ru')} ${d.currency||'₽'}</span>`;
+    if(d.price_old>0) priceHTML+=`<span class="card-price-old">${d.price_old.toLocaleString('ru')} ₽</span>`;
+  }
+
+  const url = d.url||'#';
+  return `<a class="card ${extraClass}" href="${url}" target="_blank" rel="noopener">
+    <div class="card-img-wrap" style="background:${bgColor}">
+      ${imgHTML}
+      <div class="card-placeholder" style="${placeholderStyle};background:${bgColor}">${store.logo}</div>
+      ${badgeHTML}
+      <div class="card-heart">♡</div>
+      ${tl && !isPromo ? `<div class="card-timer"><span class="card-timer-text">🕐 ${tl}</span></div>` : ''}
+    </div>
+    <div class="card-info">
+      <div class="card-store-row">
+        <span class="card-store">${store.name}</span>
+        ${d.is_hot?'<span class="card-hot">🔥 Хит</span>':''}
+      </div>
+      <div class="card-title">${d.title||''}</div>
+      <div class="card-subtitle">${d.subtitle||''}</div>
+      <div class="card-prices">${priceHTML}</div>
+    </div>
+  </a>`;
+}
+
+// ── Categories ──
+function renderCats(){
+  const el=document.getElementById('cats');
+  el.innerHTML=CATEGORIES.map(c=>{
+    const active=c.id===activeCategory;
+    const style=active && c.id!=='all' ? `border-color:${c.color}40` : '';
+    return `<button class="cat-chip ${active?'active':''}" data-cat="${c.id}" style="${style}">
+      <span class="cat-icon" style="${active && c.id!=='all'?'color:'+c.color:''}">${c.icon}</span>
+      <span class="cat-label" style="${active && c.id!=='all'?'color:'+c.color:''}">${c.name}</span>
+    </button>`;
+  }).join('');
+  el.querySelectorAll('.cat-chip').forEach(btn=>{
+    btn.onclick=()=>{activeCategory=btn.dataset.cat;renderCats();renderHome();}
+  });
+}
+
+// ── Deal of the Day ──
+function dealOfTheDayHTML(deals){
+  const candidates=deals.filter(d=>d.is_hot && d.discount>20 && d.price_current>0 && d.price_old>0);
+  if(!candidates.length) return '';
+  const today=new Date();
+  const dayOfYear=Math.floor((today-new Date(today.getFullYear(),0,0))/86400000);
+  const deal=candidates[dayOfYear%candidates.length];
+  const store=getStore(deal.store_id);
+  const saving=deal.price_old-deal.price_current;
+  const tl=timeLeft(deal.ends_at);
+  if(!tl) return '';
+
+  return `<a class="dotd" href="${deal.url||'#'}" target="_blank" rel="noopener">
+    <div class="dotd-header">
+      <span class="dotd-badge">⚡ СКИДКА ДНЯ</span>
+      <div class="dotd-timer" id="dotdTimer" data-ends="${deal.ends_at}"></div>
+    </div>
+    <div class="dotd-content">
+      <div class="dotd-store-icon" style="background:${(store.color||'#333')}33">
+        <span class="dotd-store-emoji">${store.logo}</span>
+        <span class="dotd-store-name">${store.name}</span>
+      </div>
+      <div class="dotd-info">
+        <div class="dotd-title">${deal.title}</div>
+        <div class="dotd-subtitle">${deal.subtitle||''}</div>
+        <div class="dotd-prices">
+          <span class="dotd-price">${deal.price_current.toLocaleString('ru')} ${deal.currency||'₽'}</span>
+          <span class="dotd-old">${deal.price_old.toLocaleString('ru')} ₽</span>
+        </div>
+        <div class="dotd-chips">
+          <span class="dotd-saving">Экономия ${saving.toLocaleString('ru')} ₽</span>
+          <span class="dotd-disc">-${deal.discount}%</span>
+        </div>
+      </div>
+    </div>
+    <div class="dotd-urgency">
+      <div class="dotd-urgency-fill"></div>
+      <span class="dotd-urgency-text">🔥 Разбирают прямо сейчас</span>
+    </div>
+  </a>`;
+}
+
+function updateTimer(){
+  const el=document.getElementById('dotdTimer');
+  if(!el) return;
+  const ends=el.dataset.ends;
+  const diff=new Date(ends)-new Date();
+  if(diff<=0){el.innerHTML='';return;}
+  const h=Math.floor(diff/3600000), m=Math.floor((diff%3600000)/60000), s=Math.floor((diff%60000)/1000);
+  el.innerHTML=`
+    <div><div class="timer-digit"><span class="timer-num">${String(h).padStart(2,'0')}</span></div><div class="timer-label">ч</div></div>
+    <span class="timer-colon">:</span>
+    <div><div class="timer-digit"><span class="timer-num">${String(m).padStart(2,'0')}</span></div><div class="timer-label">м</div></div>
+    <span class="timer-colon">:</span>
+    <div><div class="timer-digit"><span class="timer-num">${String(s).padStart(2,'0')}</span></div><div class="timer-label">с</div></div>`;
+}
+
+// ── LiveFeed ──
+function liveFeedHTML(){
+  if(!feedEvents.length) return '';
+  return `<div class="livefeed">
+    <div class="livefeed-header">
+      <div class="live-dot"></div>
+      <span class="livefeed-title">Покупают сейчас</span>
+    </div>
+    ${feedEvents.slice(0,3).map(e=>`<div class="feed-item">
+      <span class="feed-emoji">${e.emoji}</span>
+      <div class="feed-content">
+        <div class="feed-text"><span class="feed-name">${e.name}</span> ${e.text}</div>
+        <div class="feed-time">${e.time}</div>
+      </div>
+    </div>`).join('')}
+  </div>`;
+}
+
+async function initFeed(){
+  const clicks=await fetchClicks();
+  feedEvents=[];
+  for(let i=0;i<3;i++){
+    if(clicks[i]){
+      const st=clicks[i].store_id||'steam';
+      const actions=FEED_ACTIONS[st]||['смотрит скидку'];
+      feedEvents.push({emoji:(STORES[st]||{}).logo||'🔥',name:rand(NAMES),text:rand(actions),time:timeAgo(clicks[i].clicked_at)});
+    } else {
+      const stores=Object.keys(FEED_ACTIONS);
+      const st=rand(stores);
+      feedEvents.push({emoji:(STORES[st]||{}).logo||'🔥',name:rand(NAMES),text:rand(FEED_ACTIONS[st]),time:Math.floor(Math.random()*15+1)+' мин назад'});
+    }
+  }
+}
+
+function startFeedRotation(){
+  if(feedTimer) clearInterval(feedTimer);
+  feedTimer=setInterval(()=>{
+    const stores=Object.keys(FEED_ACTIONS);
+    const st=rand(stores);
+    feedEvents.unshift({emoji:(STORES[st]||{}).logo||'🔥',name:rand(NAMES),text:rand(FEED_ACTIONS[st]),time:'только что'});
+    feedEvents=feedEvents.slice(0,3);
+    const container=document.querySelector('.livefeed');
+    if(container && activeTab==='home' && activeCategory==='all'){
+      const items=container.querySelectorAll('.feed-item');
+      if(items.length){
+        items[0].style.opacity='0';
+        setTimeout(()=>{
+          container.querySelector('.livefeed-header').insertAdjacentHTML('afterend',
+            `<div class="feed-item" style="opacity:0"><span class="feed-emoji">${feedEvents[0].emoji}</span><div class="feed-content"><div class="feed-text"><span class="feed-name">${feedEvents[0].name}</span> ${feedEvents[0].text}</div><div class="feed-time">${feedEvents[0].time}</div></div></div>`);
+          if(container.children.length>4) container.lastElementChild.remove();
+          setTimeout(()=>{container.querySelectorAll('.feed-item')[0].style.opacity='1';},50);
+        },300);
+      }
+    }
+  },6000);
+}
+
+// ── Render Home ──
+function renderHome(){
+  const content=document.getElementById('content');
+  const deals=allDeals;
+
+  if(!deals.length){
+    content.innerHTML='<div class="loading"><div class="spinner"></div></div>';
+    return;
+  }
+
+  // Filter
+  let filtered;
+  if(activeCategory==='all') filtered=deals;
+  else if(activeCategory==='market') filtered=deals.filter(d=>MARKETPLACE_IDS.includes(d.store_id));
+  else filtered=deals.filter(d=>d.category_id===activeCategory);
+
+  if(activeCategory!=='all'){
+    content.innerHTML=`<div class="section"><div class="section-header"><div class="section-title-row"><span class="section-title">${filtered.length} скидок</span></div></div><div class="grid-wrap">${filtered.map(d=>cardHTML(d)).join('')}</div></div>`;
+    return;
+  }
+
+  // Home: all sections
+  let html='';
+
+  // Deal of the Day
+  html+=dealOfTheDayHTML(deals);
+
+  // Hot deals
+  const hot=deals.filter(d=>d.is_hot||d.is_free).slice(0,12);
+  if(hot.length){
+    html+=`<div class="section"><div class="section-header"><div class="section-title-row"><span class="section-title">🔥 Горящие скидки</span></div><span class="see-all">Все</span></div><div class="scroll-row">${hot.map(d=>cardHTML(d)).join('')}</div></div>`;
+  }
+
+  // LiveFeed
+  html+=liveFeedHTML();
+
+  // Category sections
+  CATEGORIES.filter(c=>c.id!=='all').forEach(cat=>{
+    const catDeals=cat.id==='market'
+      ? deals.filter(d=>MARKETPLACE_IDS.includes(d.store_id))
+      : deals.filter(d=>d.category_id===cat.id);
+    if(!catDeals.length) return;
+    html+=`<div class="section"><div class="section-header"><div class="section-title-row"><span class="cat-dot" style="background:${cat.color}"></span><span class="section-title">${cat.name}</span></div><span class="see-all">Все →</span></div><div class="scroll-row">${catDeals.slice(0,12).map(d=>cardHTML(d)).join('')}</div></div>`;
+  });
+
+  content.innerHTML=html;
+  updateTimer();
+
+  // Update profile stats
+  const storeSet=new Set(deals.map(d=>d.store_id));
+  document.getElementById('statDeals').textContent=deals.length;
+  document.getElementById('statStores').textContent=storeSet.size;
+}
+
+// ── Search ──
+let searchTimer2;
+document.getElementById('searchInput').addEventListener('input',e=>{
+  clearTimeout(searchTimer2);
+  searchTimer2=setTimeout(()=>{
+    const q=e.target.value.trim().toLowerCase();
+    const results=document.getElementById('searchResults');
+    if(!q){results.innerHTML='<div class="search-hint">Введите название товара, игры или магазина</div>';return;}
+    const found=allDeals.filter(d=>(d.title||'').toLowerCase().includes(q)||(d.subtitle||'').toLowerCase().includes(q)||(d.store_id||'').toLowerCase().includes(q));
+    if(!found.length){results.innerHTML='<div class="search-hint">Ничего не найдено по запросу «'+q+'»</div>';return;}
+    results.innerHTML=found.slice(0,30).map(d=>cardHTML(d,'')).join('');
+  },300);
+});
+
+// ── Tab Switching ──
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.onclick=()=>{
+    activeTab=tab.dataset.tab;
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    // Update active tab icon
+    document.querySelectorAll('.tab').forEach(t=>{
+      const icon=t.querySelector('.tab-icon');
+      if(t.dataset.tab==='wishlist') icon.textContent=t.classList.contains('active')?'❤️':'♡';
+    });
+    document.getElementById('homeScreen').style.display=activeTab==='home'?'flex':'none';
+    document.getElementById('searchScreen').classList.toggle('active',activeTab==='search');
+    document.getElementById('wishlistScreen').classList.toggle('active',activeTab==='wishlist');
+    document.getElementById('profileScreen').classList.toggle('active',activeTab==='profile');
+    if(activeTab==='search') document.getElementById('searchInput').focus();
+  };
+});
+
+// ── PWA Install ──
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;document.getElementById('installBanner').classList.add('show');});
+document.getElementById('installBtn').onclick=()=>{if(deferredPrompt){deferredPrompt.prompt();deferredPrompt.userChoice.then(()=>{document.getElementById('installBanner').classList.remove('show');deferredPrompt=null;})}};
+
+// ── Service Worker ──
+if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
+
+// ── Timer update ──
+setInterval(updateTimer,1000);
+
+// ── Init ──
+async function init(){
+  renderCats();
+  await initFeed();
+  try{
+    allDeals=await fetchDeals();
+    renderHome();
+    startFeedRotation();
+  }catch(err){
+    document.getElementById('content').innerHTML='<div style="text-align:center;padding:60px 20px;color:var(--muted)">Не удалось загрузить скидки.<br>Попробуйте позже.</div>';
+  }
+}
+init();
+</script>
+</body>
+</html>
