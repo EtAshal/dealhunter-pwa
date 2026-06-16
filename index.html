@@ -32,7 +32,7 @@ button{font-family:inherit}
 /* ── App Shell ── */
 .app{display:flex;flex-direction:column;height:100%;max-width:480px;margin:0 auto;width:100%}
 @media(min-width:481px){.app{border-left:1px solid var(--border);border-right:1px solid var(--border)}}
-.main-scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding-bottom:12px}
+.main-scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding-bottom:70px}
 
 /* ── Header ── */
 .header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;padding-top:max(12px,env(safe-area-inset-top))}
@@ -184,7 +184,7 @@ button{font-family:inherit}
 .promo-card-cta{display:block;text-align:center;background:var(--accent);color:#fff;border-radius:var(--r-md);padding:8px;font-size:13px;font-weight:700;margin-top:10px}
 
 /* ── Bottom Tabs ── */
-.tab-bar{display:flex;background:#0A0D1A;border-top:1px solid var(--border);padding:2px 0 env(safe-area-inset-bottom,0px);flex-shrink:0;margin-bottom:-18px}
+.tab-bar{display:flex;background:#0A0D1A;border-top:1px solid var(--border);padding:2px 0 env(safe-area-inset-bottom,0px);position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;z-index:100}
 .tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;padding:4px 0;cursor:pointer;color:var(--muted);transition:.2s;-webkit-tap-highlight-color:transparent}
 .tab.active{color:var(--accent)}
 .tab-icon{font-size:20px;line-height:1}
