@@ -294,6 +294,10 @@ button{font-family:inherit}
 .prof-invite-arrow{color:var(--accent);font-size:18px}
 .prof-footer{text-align:center;padding:20px;color:var(--muted);font-size:11px}
 .prof-footer a{color:var(--accent)}
+@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(-20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+@keyframes toastOut{from{opacity:1}to{opacity:0;transform:translateX(-50%) translateY(-20px)}}
+.kw-tag{display:inline-flex;align-items:center;gap:6px;background:var(--tag);color:var(--accent);border-radius:var(--r-pill);padding:6px 12px;font-size:13px;font-weight:600;margin:0 6px 6px 0}
+.kw-remove{cursor:pointer;font-size:16px;color:var(--muted);margin-left:2px}
 
 /* Desktop */
 @media(min-width:481px){
@@ -373,13 +377,13 @@ button{font-family:inherit}
           <div class="prof-trophy">🏆 <span id="profAchievements">0/22</span></div>
         </div>
         <div class="prof-xp-bar"><div class="prof-xp-fill" style="width:0%"></div></div>
-        <div class="prof-streak">
-          <div class="prof-streak-left">🔥 <span id="profStreak">5</span> дн подряд • Сэкономлено <span id="profSaved">0</span> ₽</div>
+        <div class="prof-streak" onclick="showAchievementsModal()" style="cursor:pointer">
+          <div class="prof-streak-left">🔥 <span id="profStreak">1</span> дн подряд • Сэкономлено <span id="profSaved">0</span> ₽</div>
           <span style="color:var(--muted)">›</span>
         </div>
       </div>
 
-      <div class="prof-link">
+      <div class="prof-link" onclick="alert('Авторизация будет доступна в следующем обновлении')">
         <div class="prof-link-icon">👤</div>
         <div class="prof-link-body">
           <div class="prof-link-title">Войти в аккаунт</div>
@@ -407,7 +411,7 @@ button{font-family:inherit}
         </div>
       </div>
 
-      <div class="prof-link">
+      <div class="prof-link" onclick="showKeywordsModal()">
         <div class="prof-link-icon">🔎</div>
         <div class="prof-link-body">
           <div class="prof-link-title">Отслеживание по словам</div>
@@ -416,7 +420,7 @@ button{font-family:inherit}
         <span class="prof-link-arrow">›</span>
       </div>
 
-      <div class="prof-invite">
+      <div class="prof-invite" onclick="inviteFriend()">
         <div class="prof-invite-icon">🎁</div>
         <div class="prof-invite-body">
           <div class="prof-invite-title">Пригласи друга</div>
@@ -430,12 +434,12 @@ button{font-family:inherit}
         <div class="prof-toggle-row">
           <span class="prof-toggle-icon">⚡</span>
           <span class="prof-toggle-label">Горящие скидки</span>
-          <label class="prof-toggle"><input type="checkbox" checked><span class="prof-toggle-track"></span></label>
+          <label class="prof-toggle"><input type="checkbox" checked data-notif="hot"><span class="prof-toggle-track"></span></label>
         </div>
         <div class="prof-toggle-row">
           <span class="prof-toggle-icon">📉</span>
           <span class="prof-toggle-label">Снижение цены в списке</span>
-          <label class="prof-toggle"><input type="checkbox" checked><span class="prof-toggle-track"></span></label>
+          <label class="prof-toggle"><input type="checkbox" checked data-notif="priceDrop"><span class="prof-toggle-track"></span></label>
         </div>
       </div>
 
@@ -444,27 +448,27 @@ button{font-family:inherit}
         <div class="prof-toggle-row">
           <span class="prof-toggle-icon">🎮</span>
           <span class="prof-toggle-label">Игры</span>
-          <label class="prof-toggle"><input type="checkbox" checked><span class="prof-toggle-track"></span></label>
+          <label class="prof-toggle"><input type="checkbox" checked data-interest="games"><span class="prof-toggle-track"></span></label>
         </div>
         <div class="prof-toggle-row">
           <span class="prof-toggle-icon">👕</span>
           <span class="prof-toggle-label">Одежда</span>
-          <label class="prof-toggle"><input type="checkbox" checked><span class="prof-toggle-track"></span></label>
+          <label class="prof-toggle"><input type="checkbox" checked data-interest="clothes"><span class="prof-toggle-track"></span></label>
         </div>
         <div class="prof-toggle-row">
           <span class="prof-toggle-icon">🏬</span>
           <span class="prof-toggle-label">Маркетплейсы</span>
-          <label class="prof-toggle"><input type="checkbox" checked><span class="prof-toggle-track"></span></label>
+          <label class="prof-toggle"><input type="checkbox" checked data-interest="market"><span class="prof-toggle-track"></span></label>
         </div>
         <div class="prof-toggle-row">
           <span class="prof-toggle-icon">✈️</span>
           <span class="prof-toggle-label">Путешествия</span>
-          <label class="prof-toggle"><input type="checkbox" checked><span class="prof-toggle-track"></span></label>
+          <label class="prof-toggle"><input type="checkbox" checked data-interest="travel"><span class="prof-toggle-track"></span></label>
         </div>
         <div class="prof-toggle-row">
           <span class="prof-toggle-icon">📱</span>
           <span class="prof-toggle-label">Электроника</span>
-          <label class="prof-toggle"><input type="checkbox" checked><span class="prof-toggle-track"></span></label>
+          <label class="prof-toggle"><input type="checkbox" checked data-interest="electronics"><span class="prof-toggle-track"></span></label>
         </div>
       </div>
 
@@ -847,17 +851,12 @@ function saveWishlist(list){ localStorage.setItem('dh_wishlist',JSON.stringify(l
 function isInWishlist(id){ return getWishlist().includes(id) }
 function toggleWishlist(id){
   let list=getWishlist();
-  if(list.includes(id)) list=list.filter(x=>x!==id);
-  else list.push(id);
+  const adding=!list.includes(id);
+  if(adding) list.push(id); else list=list.filter(x=>x!==id);
   saveWishlist(list);
   refreshHearts();
   renderWishlist();
-  const btn=document.querySelector('.detail-wish-btn');
-  if(btn){
-    const w=list.includes(id);
-    btn.className='detail-btn detail-btn-secondary'+(w?' wishlisted':'');
-    btn.innerHTML=heartSVG(w)+' '+(w?'В избранном':'В избранное');
-  }
+  if(adding) trackWishAdd();
 }
 function refreshHearts(){
   document.querySelectorAll('.card[data-id]').forEach(card=>{
@@ -872,6 +871,255 @@ function refreshHearts(){
 function heartSVG(filled){
   return `<svg width="18" height="18" viewBox="0 0 512 512" fill="${filled?'currentColor':'none'}" stroke="currentColor" stroke-width="36" stroke-linejoin="round"><path d="M352.92 80C288 80 256 144 256 144s-32-64-96.92-64c-52.76 0-94.54 44.14-95.08 96.81-1.1 109.33 86.73 187.08 183 252.42a16 16 0 0018 0c96.26-65.34 184.09-143.09 183-252.42-.54-52.67-42.32-96.81-95.08-96.81z"/></svg>`;
 }
+
+// ── Profile / Gamification (localStorage) ──
+const RANKS=[
+  {name:'Новичок',emoji:'🐣',xp:0},
+  {name:'Охотник',emoji:'🎯',xp:50},
+  {name:'Следопыт',emoji:'🔍',xp:150},
+  {name:'Мастер',emoji:'🏹',xp:400},
+  {name:'Легенда',emoji:'👑',xp:1000}
+];
+const ACHIEVEMENTS=[
+  {id:'first_view',name:'Первый взгляд',desc:'Откройте первую скидку',icon:'👀',check:s=>s.views>=1},
+  {id:'views_10',name:'Любопытный',desc:'Откройте 10 скидок',icon:'🔎',check:s=>s.views>=10},
+  {id:'views_50',name:'Исследователь',desc:'Откройте 50 скидок',icon:'🗺️',check:s=>s.views>=50},
+  {id:'views_100',name:'Эксперт',desc:'Откройте 100 скидок',icon:'🎓',check:s=>s.views>=100},
+  {id:'first_wish',name:'Первое желание',desc:'Добавьте скидку в список',icon:'💜',check:s=>s.wishes>=1},
+  {id:'wishes_5',name:'Коллекционер',desc:'5 скидок в списке',icon:'📦',check:s=>s.wishes>=5},
+  {id:'wishes_20',name:'Собиратель',desc:'20 скидок в списке',icon:'🗃️',check:s=>s.wishes>=20},
+  {id:'first_share',name:'Посол',desc:'Поделитесь скидкой',icon:'📢',check:s=>s.shares>=1},
+  {id:'shares_5',name:'Инфлюенсер',desc:'Поделитесь 5 раз',icon:'📣',check:s=>s.shares>=5},
+  {id:'first_report',name:'Контролёр',desc:'Сообщите о неверной цене',icon:'🛡️',check:s=>s.reports>=1},
+  {id:'streak_3',name:'На разогреве',desc:'3 дня подряд',icon:'🔥',check:s=>s.streak>=3},
+  {id:'streak_7',name:'Недельный марафон',desc:'7 дней подряд',icon:'🏃',check:s=>s.streak>=7},
+  {id:'streak_30',name:'Железная воля',desc:'30 дней подряд',icon:'💪',check:s=>s.streak>=30},
+  {id:'xp_100',name:'Сотня',desc:'Наберите 100 XP',icon:'💯',check:s=>s.xp>=100},
+  {id:'xp_500',name:'Полтысячи',desc:'Наберите 500 XP',icon:'⭐',check:s=>s.xp>=500},
+  {id:'xp_1000',name:'Тысячник',desc:'Наберите 1000 XP',icon:'🌟',check:s=>s.xp>=1000},
+  {id:'cats_all',name:'Всеядный',desc:'Включите все интересы',icon:'🌈',check:s=>s.allCats},
+  {id:'first_keyword',name:'Сталкер',desc:'Добавьте ключевое слово',icon:'🔑',check:s=>s.keywords>=1},
+  {id:'saved_1000',name:'Экономист',desc:'Сэкономьте 1 000 ₽',icon:'💰',check:s=>s.saved>=1000},
+  {id:'saved_10000',name:'Финансист',desc:'Сэкономьте 10 000 ₽',icon:'🏦',check:s=>s.saved>=10000},
+  {id:'invite',name:'Друг DealHunter',desc:'Пригласите друга',icon:'🤝',check:s=>s.invited>=1},
+  {id:'night_owl',name:'Ночной охотник',desc:'Зайдите после полуночи',icon:'🦉',check:s=>s.nightOwl},
+];
+
+function getProfile(){
+  try{return JSON.parse(localStorage.getItem('dh_profile')||'null')||defaultProfile()}catch{return defaultProfile()}
+}
+function defaultProfile(){
+  return {xp:0,views:0,wishes:0,shares:0,reports:0,streak:1,lastVisit:new Date().toDateString(),invited:0,keywords:[],notif:{hot:true,priceDrop:true},interests:{games:true,clothes:true,market:true,travel:true,electronics:true},nightOwl:false,unlocked:[]};
+}
+function saveProfile(p){localStorage.setItem('dh_profile',JSON.stringify(p))}
+
+function addXP(amount,reason){
+  const p=getProfile();
+  p.xp+=amount;
+  saveProfile(p);
+  showXPToast(amount,reason);
+  updateProfileUI();
+}
+
+function showXPToast(amount,reason){
+  const el=document.createElement('div');
+  el.style.cssText='position:fixed;top:max(20px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);background:#7C3AED;color:#fff;padding:8px 16px;border-radius:20px;font-size:13px;font-weight:700;z-index:999;animation:toastIn .3s ease,toastOut .3s ease 1.7s forwards;white-space:nowrap';
+  el.textContent=`+${amount} XP — ${reason}`;
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),2100);
+}
+
+function trackView(){
+  const p=getProfile();
+  p.views++;
+  addXP(2,'Просмотр скидки');
+  saveProfile(p);
+  checkAchievements();
+}
+function trackWishAdd(){
+  const p=getProfile();
+  p.wishes=getWishlist().length;
+  addXP(5,'В избранное');
+  saveProfile(p);
+  checkAchievements();
+}
+function trackShare(){
+  const p=getProfile();
+  p.shares++;
+  addXP(5,'Поделились');
+  saveProfile(p);
+  checkAchievements();
+}
+function trackReport(){
+  const p=getProfile();
+  p.reports++;
+  addXP(10,'Сообщение о цене');
+  saveProfile(p);
+  checkAchievements();
+}
+function trackInvite(){
+  const p=getProfile();
+  p.invited++;
+  addXP(20,'Приглашение друга');
+  saveProfile(p);
+  checkAchievements();
+}
+
+function updateStreak(){
+  const p=getProfile();
+  const today=new Date().toDateString();
+  if(p.lastVisit===today) return;
+  const yesterday=new Date(Date.now()-86400000).toDateString();
+  if(p.lastVisit===yesterday){p.streak++;addXP(10,'Ежедневный бонус');}
+  else if(p.lastVisit!==today){p.streak=1;addXP(10,'Ежедневный бонус');}
+  p.lastVisit=today;
+  if(new Date().getHours()>=0&&new Date().getHours()<5) p.nightOwl=true;
+  saveProfile(p);
+  checkAchievements();
+}
+
+function getRank(xp){
+  let r=RANKS[0];
+  for(const rank of RANKS){if(xp>=rank.xp) r=rank;}
+  return r;
+}
+function getNextRank(xp){
+  for(const rank of RANKS){if(xp<rank.xp) return rank;}
+  return null;
+}
+
+function calcSaved(){
+  const list=getWishlist();
+  return allDeals.filter(d=>list.includes(d.id)&&d.price_old>0&&d.price_current>0&&d.price_old>d.price_current).reduce((s,d)=>s+(d.price_old-d.price_current),0);
+}
+
+function checkAchievements(){
+  const p=getProfile();
+  const s={...p,saved:calcSaved(),allCats:Object.values(p.interests).every(v=>v),keywords:p.keywords.length};
+  let newUnlocks=0;
+  ACHIEVEMENTS.forEach(a=>{
+    if(!p.unlocked.includes(a.id)&&a.check(s)){p.unlocked.push(a.id);newUnlocks++;}
+  });
+  if(newUnlocks) saveProfile(p);
+  updateProfileUI();
+}
+
+function updateProfileUI(){
+  const p=getProfile();
+  const rank=getRank(p.xp);
+  const next=getNextRank(p.xp);
+  const el=id=>document.getElementById(id);
+  const av=document.querySelector('.prof-avatar');
+  if(av) av.textContent=rank.emoji;
+  const nm=document.querySelector('.prof-name');
+  if(nm) nm.textContent=rank.name;
+  const rk=document.querySelector('.prof-rank');
+  if(rk) rk.textContent=`Уровень ${RANKS.indexOf(rank)+1} • ${p.xp} XP`;
+  const ach=el('profAchievements');
+  if(ach) ach.textContent=`${p.unlocked.length}/${ACHIEVEMENTS.length}`;
+  const bar=document.querySelector('.prof-xp-fill');
+  if(bar&&next) bar.style.width=Math.min(100,((p.xp-rank.xp)/(next.xp-rank.xp))*100)+'%';
+  else if(bar) bar.style.width='100%';
+  const streak=el('profStreak');
+  if(streak) streak.textContent=p.streak;
+  const saved=el('profSaved');
+  if(saved) saved.textContent=calcSaved().toLocaleString('ru');
+  // toggles
+  document.querySelectorAll('[data-notif]').forEach(inp=>{inp.checked=p.notif[inp.dataset.notif]!==false;});
+  document.querySelectorAll('[data-interest]').forEach(inp=>{inp.checked=p.interests[inp.dataset.interest]!==false;});
+}
+
+function initProfileToggles(){
+  document.querySelectorAll('[data-notif]').forEach(inp=>{
+    inp.addEventListener('change',()=>{const p=getProfile();p.notif[inp.dataset.notif]=inp.checked;saveProfile(p);});
+  });
+  document.querySelectorAll('[data-interest]').forEach(inp=>{
+    inp.addEventListener('change',()=>{const p=getProfile();p.interests[inp.dataset.interest]=inp.checked;saveProfile(p);checkAchievements();});
+  });
+}
+
+// ── Keywords tracking ──
+function getKeywords(){const p=getProfile();return p.keywords||[];}
+function addKeyword(word){
+  const p=getProfile();
+  if(!p.keywords) p.keywords=[];
+  word=word.trim().toLowerCase();
+  if(!word||p.keywords.includes(word)) return;
+  p.keywords.push(word);
+  saveProfile(p);
+  addXP(5,'Новое ключевое слово');
+  checkAchievements();
+  renderKeywords();
+}
+function removeKeyword(word){
+  const p=getProfile();
+  p.keywords=(p.keywords||[]).filter(w=>w!==word);
+  saveProfile(p);
+  renderKeywords();
+}
+function renderKeywords(){
+  const el=document.getElementById('keywordsList');
+  if(!el) return;
+  const kw=getKeywords();
+  if(!kw.length){el.innerHTML='<div style="color:var(--muted);font-size:13px;padding:8px 0">Пока нет ключевых слов</div>';return;}
+  el.innerHTML=kw.map(w=>`<div class="kw-tag">${w}<span class="kw-remove" onclick="removeKeyword('${w}')">×</span></div>`).join('');
+}
+
+function showKeywordsModal(){
+  const kw=getKeywords();
+  const overlay=document.getElementById('detailOverlay');
+  const modal=document.getElementById('detailModal');
+  modal.innerHTML=`
+    <div class="detail-img-wrap" style="background:var(--card);padding:20px;padding-top:max(20px,env(safe-area-inset-top))">
+      <div class="detail-back-btn" onclick="closeDeal()"><svg width="20" height="20" viewBox="0 0 512 512" fill="none" stroke="currentColor" stroke-width="48" stroke-linecap="round" stroke-linejoin="round"><polyline points="328 112 184 256 328 400"/></svg></div>
+      <div style="text-align:center;font-size:40px;margin:20px 0 10px">🔎</div>
+      <div style="text-align:center;font-size:18px;font-weight:800;color:var(--text)">Отслеживание по словам</div>
+      <div style="text-align:center;font-size:13px;color:var(--text2);margin-top:4px">Получайте уведомления о скидках по ключевым словам</div>
+    </div>
+    <div class="detail-body" style="padding-top:16px">
+      <div style="display:flex;gap:8px;margin-bottom:16px">
+        <input id="kwInput" type="text" placeholder="Например: iPhone, Nike, PS5..." style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;color:var(--text);font-size:14px;outline:none">
+        <button onclick="addKeyword(document.getElementById('kwInput').value);document.getElementById('kwInput').value=''" style="background:var(--accent);color:#fff;border:none;border-radius:var(--r-md);padding:12px 16px;font-weight:700;font-size:14px;cursor:pointer">+</button>
+      </div>
+      <div id="keywordsList"></div>
+      <div style="margin-top:16px;color:var(--muted);font-size:12px;line-height:18px">Мы проверяем каждую новую скидку и покажем уведомление, если она совпадёт с вашими словами.</div>
+    </div>`;
+  renderKeywords();
+  overlay.classList.add('open');
+  document.body.style.overflow='hidden';
+}
+
+function showAchievementsModal(){
+  const p=getProfile();
+  const overlay=document.getElementById('detailOverlay');
+  const modal=document.getElementById('detailModal');
+  const items=ACHIEVEMENTS.map(a=>{
+    const done=p.unlocked.includes(a.id);
+    return `<div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);opacity:${done?1:0.4}">
+      <div style="font-size:24px;width:36px;text-align:center">${a.icon}</div>
+      <div style="flex:1"><div style="font-size:14px;font-weight:700;color:var(--text)">${a.name}</div><div style="font-size:12px;color:var(--text2)">${a.desc}</div></div>
+      ${done?'<span style="color:#4ADE80;font-size:18px">✓</span>':'<span style="color:var(--muted);font-size:12px">🔒</span>'}
+    </div>`;
+  }).join('');
+  modal.innerHTML=`
+    <div class="detail-img-wrap" style="background:var(--card);padding:20px;padding-top:max(20px,env(safe-area-inset-top))">
+      <div class="detail-back-btn" onclick="closeDeal()"><svg width="20" height="20" viewBox="0 0 512 512" fill="none" stroke="currentColor" stroke-width="48" stroke-linecap="round" stroke-linejoin="round"><polyline points="328 112 184 256 328 400"/></svg></div>
+      <div style="text-align:center;font-size:40px;margin:20px 0 10px">🏆</div>
+      <div style="text-align:center;font-size:18px;font-weight:800;color:var(--text)">Достижения</div>
+      <div style="text-align:center;font-size:13px;color:var(--text2);margin-top:4px">${p.unlocked.length} из ${ACHIEVEMENTS.length} открыто</div>
+    </div>
+    <div class="detail-body" style="padding-top:8px">${items}</div>`;
+  overlay.classList.add('open');
+  document.body.style.overflow='hidden';
+}
+
+function inviteFriend(){
+  const text='Попробуй DealHunter — лучшие скидки в одном месте! 🔥';
+  const url='https://pwa.dealhunterapp.online';
+  if(navigator.share){navigator.share({title:'DealHunter',text,url}).then(()=>trackInvite()).catch(()=>{});}
+  else{navigator.clipboard.writeText(text+' '+url).then(()=>{trackInvite();alert('Ссылка скопирована!');});}
+}
+
 function renderWishlist(){
   const body=document.querySelector('#wishlistScreen .screen-body');
   const list=getWishlist();
@@ -946,6 +1194,7 @@ function priceCompHTML(deal){
 function openDeal(id){
   const d=allDeals.find(x=>x.id===id);
   if(!d) return;
+  trackView();
   const store=getStore(d.store_id);
   const tl=timeLeft(d.ends_at);
   const w=isInWishlist(id);
@@ -1006,7 +1255,7 @@ function openDeal(id){
         <button class="detail-btn detail-btn-primary" onclick="window.open('${d.url||'#'}','_blank')">Перейти к сделке →</button>
       </div>
       ${priceCompHTML(d)}
-      <div class="detail-report" onclick="alert('Спасибо за отзыв! +10 XP')">ⓘ Цена не совпадает? <span class="xp-badge">+10 XP</span></div>
+      <div class="detail-report" onclick="trackReport()">ⓘ Цена не совпадает? <span class="xp-badge">+10 XP</span></div>
       <div class="detail-disclaimer">Откроется в ${storeName}. Покупая по нашей ссылке, вы поддерживаете DealHunter — вам это ничего не стоит.</div>
     </div>`;
   document.getElementById('detailOverlay').classList.add('open');
@@ -1021,6 +1270,7 @@ function closeDeal(){
 function shareDeal(id){
   const d=allDeals.find(x=>x.id===id);
   if(!d) return;
+  trackShare();
   const text=`${d.title} — ${d.is_free?'Бесплатно':d.price_current?d.price_current.toLocaleString('ru')+' '+(d.currency||'₽'):'Скидка'}${d.discount?' (-'+d.discount+'%)':''}`;
   const url=d.url||location.href;
   if(navigator.share){
@@ -1066,12 +1316,16 @@ setInterval(updateTimer,1000);
 // ── Init ──
 async function init(){
   renderCats();
+  updateStreak();
+  initProfileToggles();
+  updateProfileUI();
   await initFeed();
   try{
     allDeals=await fetchDeals();
     renderHome();
     startFeedRotation();
-    }catch(err){
+    checkAchievements();
+  }catch(err){
     document.getElementById('content').innerHTML='<div style="text-align:center;padding:60px 20px;color:var(--muted)">Не удалось загрузить скидки.<br>Попробуйте позже.</div>';
   }
 }
