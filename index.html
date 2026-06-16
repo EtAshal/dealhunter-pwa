@@ -7,6 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="mobile-web-app-capable" content="yes">
+<meta name="mitgo-verification" content="416beabd-910d-416e-881e-bf5cbbd90bed" />
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -167,6 +168,20 @@ button{font-family:inherit}
 .detail-btn-share:active{background:var(--card2)}
 .detail-report{display:flex;align-items:center;justify-content:center;gap:6px;background:var(--card);border:1px solid var(--border);border-radius:var(--r-md);padding:10px;margin-bottom:16px;color:var(--text2);font-size:13px;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .detail-report .xp-badge{background:var(--accent);color:#fff;border-radius:var(--r-pill);padding:2px 8px;font-size:11px;font-weight:700}
+
+/* ── Promo Codes ── */
+.promo-card{flex:0 0 260px;background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;text-decoration:none;-webkit-tap-highlight-color:transparent;transition:transform .15s}
+.promo-card:active{transform:scale(.97)}
+.promo-card-banner{height:80px;display:flex;align-items:center;justify-content:center;position:relative}
+.promo-card-banner-text{font-size:22px;font-weight:900;letter-spacing:1px}
+.promo-card-badge{position:absolute;top:8px;right:8px;padding:2px 8px;border-radius:var(--r-sm);font-size:10px;font-weight:700;color:#fff}
+.promo-card-body{padding:12px 14px}
+.promo-card-title{color:var(--text);font-size:14px;font-weight:700;margin-bottom:4px}
+.promo-card-desc{color:var(--text2);font-size:12px;line-height:1.4;margin-bottom:10px}
+.promo-card-rate{display:flex;align-items:center;gap:6px}
+.promo-card-rate span{color:var(--muted);font-size:11px}
+.promo-card-rate strong{color:var(--accent);font-size:12px;font-weight:700}
+.promo-card-cta{display:block;text-align:center;background:var(--accent);color:#fff;border-radius:var(--r-md);padding:8px;font-size:13px;font-weight:700;margin-top:10px}
 
 /* ── Bottom Tabs ── */
 .tab-bar{display:flex;background:#0A0D1A;border-top:1px solid var(--border);padding:2px 0 env(safe-area-inset-bottom,0px);flex-shrink:0}
@@ -726,6 +741,28 @@ function updateTimer(){
     <div><div class="timer-digit"><span class="timer-num">${String(s).padStart(2,'0')}</span></div><div class="timer-label">с</div></div>`;
 }
 
+// ── Promo Codes ──
+const PROMO_CODES=[
+  {id:'shop',title:'Kupikod Shop',desc:'Промокоды на маркетплейсы, доставку еды, такси и сервисы',bg:'linear-gradient(135deg,#1a1a2e,#16213e)',textColor:'#2EE59D',badge:'CPS',badgeColor:'#2EE59D',rate:'3.21%',url:'https://ogsib.com/g/2nlaarvlvqfeadb8007b1cacb6a11c/?erid=2bL9aMPo2e49hMef4rqy6bXUZz'},
+  {id:'gold',title:'Kupikod Gold',desc:'Премиум промокоды с повышенными скидками на топ-бренды',bg:'linear-gradient(135deg,#1a1a2e,#2d1b4e)',textColor:'#FFD700',badge:'Gold',badgeColor:'#FFD700',rate:'1.92–3.21%',url:'https://axavl.com/g/k3fpdyqgnhfeadb8007b2de2922f6f/?erid=2bL9aMPo2e49hMef4rqy6bXUeR'},
+  {id:'steam',title:'Kupikod Steam',desc:'Промокоды и скидки на игры, DLC и внутриигровые покупки',bg:'linear-gradient(135deg,#1a1a2e,#1b2838)',textColor:'#2EE59D',badge:'Steam',badgeColor:'#66C0F4',rate:'3%',url:'https://rkdro.com/g/588p0on718feadb8007b3c1b50dd59/?erid=2bL9aMPo2e49hMef4rqy6bXUeQ'}
+];
+
+function promoCodesHTML(){
+  return `<div class="section"><div class="section-header"><div class="section-title-row"><span class="section-title">🏷️ Промокоды</span></div></div><div class="scroll-row">${PROMO_CODES.map(p=>`<a class="promo-card" href="${p.url}" target="_blank" rel="noopener" onclick="addXP(3,'Промокод')">
+    <div class="promo-card-banner" style="background:${p.bg}">
+      <span class="promo-card-banner-text" style="color:${p.textColor}">KUPIKOD</span>
+      <span class="promo-card-badge" style="background:${p.badgeColor}30;color:${p.textColor}">${p.badge}</span>
+    </div>
+    <div class="promo-card-body">
+      <div class="promo-card-title">${p.title}</div>
+      <div class="promo-card-desc">${p.desc}</div>
+      <div class="promo-card-rate"><span>Кэшбэк до</span><strong>${p.rate}</strong></div>
+      <div class="promo-card-cta">Получить промокод →</div>
+    </div>
+  </a>`).join('')}</div></div>`;
+}
+
 // ── LiveFeed ──
 function liveFeedHTML(){
   if(!feedEvents.length) return '';
@@ -851,6 +888,9 @@ function renderHome(){
   if(hot.length){
     html+=`<div class="section"><div class="section-header"><div class="section-title-row"><span class="section-title">🔥 Горящие скидки</span></div><span class="see-all">Все</span></div><div class="scroll-row">${hot.map(d=>cardHTML(d)).join('')}</div></div>`;
   }
+
+  // Promo codes
+  html+=promoCodesHTML();
 
   // LiveFeed
   html+=liveFeedHTML();
