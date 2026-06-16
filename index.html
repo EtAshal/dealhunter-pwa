@@ -130,6 +130,38 @@ button{font-family:inherit}
 .card-price-current.travel{color:var(--catTravel)}
 .card-price-old{color:var(--muted);font-size:12px;text-decoration:line-through}
 
+/* ── Deal Detail Modal ── */
+.detail-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:200;display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.detail-overlay.open{display:flex}
+.detail-modal{background:var(--bg);width:100%;max-width:480px;max-height:92vh;border-radius:var(--r-xl) var(--r-xl) 0 0;overflow-y:auto;-webkit-overflow-scrolling:touch;animation:slideUp .3s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.detail-close{position:sticky;top:0;z-index:10;display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:var(--bg)}
+.detail-close-btn{width:36px;height:36px;border-radius:18px;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text);font-size:14px}
+.detail-share-btn{width:36px;height:36px;border-radius:18px;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text)}
+.detail-img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block}
+.detail-img-placeholder{width:100%;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;font-size:72px}
+.detail-body{padding:0 16px 24px}
+.detail-store{display:inline-flex;align-items:center;gap:6px;background:var(--card);border-radius:var(--r-pill);padding:5px 12px;margin-bottom:10px;border:1px solid var(--border)}
+.detail-store-logo{font-size:16px}
+.detail-store-name{color:var(--text2);font-size:12px;font-weight:700;text-transform:uppercase}
+.detail-title{color:var(--text);font-size:22px;font-weight:900;line-height:28px;margin-bottom:4px}
+.detail-subtitle{color:var(--text2);font-size:14px;line-height:20px;margin-bottom:16px}
+.detail-price-row{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.detail-price{color:var(--accent);font-size:28px;font-weight:900}
+.detail-price-old{color:var(--muted);font-size:16px;text-decoration:line-through}
+.detail-discount{background:var(--deal);color:#fff;border-radius:var(--r-sm);padding:4px 10px;font-weight:800;font-size:14px}
+.detail-saving{color:var(--text2);font-size:13px;margin-bottom:16px}
+.detail-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px}
+.detail-tag{background:var(--tag);border-radius:var(--r-pill);padding:4px 10px;color:var(--accent);font-size:12px;font-weight:600}
+.detail-timer{display:flex;align-items:center;gap:6px;color:var(--catTravel);font-size:13px;font-weight:700;margin-bottom:16px}
+.detail-actions{display:flex;flex-direction:column;gap:10px;padding-bottom:env(safe-area-inset-bottom)}
+.detail-btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;border-radius:var(--r-md);font-size:15px;font-weight:700;cursor:pointer;border:none;width:100%}
+.detail-btn-primary{background:var(--accent);color:#fff}
+.detail-btn-primary:active{background:var(--accentDim)}
+.detail-btn-secondary{background:var(--card);color:var(--text);border:1px solid var(--border)}
+.detail-btn-secondary:active{background:var(--card2)}
+.detail-btn-secondary.wishlisted{background:var(--accentGlow);border-color:var(--accent);color:var(--accent)}
+
 /* ── Bottom Tabs ── */
 .tab-bar{display:flex;background:#0A0D1A;border-top:1px solid var(--border);padding:4px 0 max(14px, env(safe-area-inset-bottom));flex-shrink:0}
 .tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;cursor:pointer;color:var(--muted);transition:.2s}
@@ -279,6 +311,11 @@ button{font-family:inherit}
     </div>
   </div>
 
+  <!-- ═══ DEAL DETAIL ═══ -->
+  <div class="detail-overlay" id="detailOverlay" onclick="if(event.target===this)closeDeal()">
+    <div class="detail-modal" id="detailModal"></div>
+  </div>
+
   <!-- ═══ TAB BAR ═══ -->
   <div class="tab-bar">
     <div class="tab active" data-tab="home"><div class="tab-icon"><svg width="24" height="24" viewBox="0 0 512 512" fill="currentColor"><path d="M194.82 496a18.36 18.36 0 01-18.1-21.27l28.29-184.87H96a16 16 0 01-12.44-26.06L302.73 23a18.45 18.45 0 0132.8 13.71c0 .3-.08.59-.13.89l-28.37 185H416a16 16 0 0112.44 26.06L209.24 489a18.45 18.45 0 01-14.42 7z"/></svg></div><div class="tab-label">Скидки</div></div>
@@ -405,13 +442,15 @@ function cardHTML(d, extraClass=''){
     if(d.price_old>0) priceHTML+=`<span class="card-price-old">${d.price_old.toLocaleString('ru')} ₽</span>`;
   }
 
-  const url = d.url||'#';
-  return `<a class="card ${extraClass}" href="${url}" target="_blank" rel="noopener">
+  const wishlisted = isInWishlist(d.id);
+  const heartFill = wishlisted ? 'var(--deal)' : 'none';
+  const heartStroke = wishlisted ? 'var(--deal)' : 'currentColor';
+  return `<div class="card ${extraClass}" onclick="openDeal('${d.id}')" data-id="${d.id}">
     <div class="card-img-wrap" style="background:${bgColor}">
       ${imgHTML}
       <div class="card-placeholder" style="${placeholderStyle};background:${bgColor}">${store.logo}</div>
       ${badgeHTML}
-      <div class="card-heart"><svg width="18" height="18" viewBox="0 0 512 512" fill="none" stroke="currentColor" stroke-width="36" stroke-linejoin="round"><path d="M352.92 80C288 80 256 144 256 144s-32-64-96.92-64c-52.76 0-94.54 44.14-95.08 96.81-1.1 109.33 86.73 187.08 183 252.42a16 16 0 0018 0c96.26-65.34 184.09-143.09 183-252.42-.54-52.67-42.32-96.81-95.08-96.81z"/></svg></div>
+      <div class="card-heart" onclick="event.stopPropagation();toggleWishlist('${d.id}')"><svg width="18" height="18" viewBox="0 0 512 512" fill="${heartFill}" stroke="${heartStroke}" stroke-width="36" stroke-linejoin="round"><path d="M352.92 80C288 80 256 144 256 144s-32-64-96.92-64c-52.76 0-94.54 44.14-95.08 96.81-1.1 109.33 86.73 187.08 183 252.42a16 16 0 0018 0c96.26-65.34 184.09-143.09 183-252.42-.54-52.67-42.32-96.81-95.08-96.81z"/></svg></div>
       ${tl && !isPromo ? `<div class="card-timer"><span class="card-timer-text"><svg width="12" height="12" viewBox="0 0 512 512" fill="none" stroke="currentColor" stroke-width="36" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:2px"><path d="M256 64C150 64 64 150 64 256s86 192 192 192 192-86 192-192S362 64 256 64z"/><polyline points="256 128 256 272 352 320"/></svg> ${tl}</span></div>` : ''}
     </div>
     <div class="card-info">
@@ -423,7 +462,7 @@ function cardHTML(d, extraClass=''){
       <div class="card-subtitle">${d.subtitle||''}</div>
       <div class="card-prices">${priceHTML}</div>
     </div>
-  </a>`;
+  </div>`;
 }
 
 // ── Categories ──
@@ -624,6 +663,124 @@ document.getElementById('searchInput').addEventListener('input',e=>{
   },300);
 });
 
+// ── Wishlist (localStorage) ──
+function getWishlist(){ try{return JSON.parse(localStorage.getItem('dh_wishlist')||'[]')}catch{return []} }
+function saveWishlist(list){ localStorage.setItem('dh_wishlist',JSON.stringify(list)) }
+function isInWishlist(id){ return getWishlist().includes(id) }
+function toggleWishlist(id){
+  let list=getWishlist();
+  if(list.includes(id)) list=list.filter(x=>x!==id);
+  else list.push(id);
+  saveWishlist(list);
+  refreshHearts();
+  renderWishlist();
+  document.getElementById('statSaved').textContent=getWishlist().length;
+  const btn=document.querySelector('.detail-wish-btn');
+  if(btn){
+    const w=list.includes(id);
+    btn.className='detail-btn detail-btn-secondary'+(w?' wishlisted':'');
+    btn.innerHTML=heartSVG(w)+' '+(w?'В избранном':'В избранное');
+  }
+}
+function refreshHearts(){
+  document.querySelectorAll('.card[data-id]').forEach(card=>{
+    const id=card.dataset.id;
+    const svg=card.querySelector('.card-heart svg');
+    if(!svg) return;
+    const w=isInWishlist(id);
+    svg.setAttribute('fill',w?'var(--deal)':'none');
+    svg.setAttribute('stroke',w?'var(--deal)':'currentColor');
+  });
+}
+function heartSVG(filled){
+  return `<svg width="18" height="18" viewBox="0 0 512 512" fill="${filled?'currentColor':'none'}" stroke="currentColor" stroke-width="36" stroke-linejoin="round"><path d="M352.92 80C288 80 256 144 256 144s-32-64-96.92-64c-52.76 0-94.54 44.14-95.08 96.81-1.1 109.33 86.73 187.08 183 252.42a16 16 0 0018 0c96.26-65.34 184.09-143.09 183-252.42-.54-52.67-42.32-96.81-95.08-96.81z"/></svg>`;
+}
+function renderWishlist(){
+  const body=document.querySelector('#wishlistScreen .screen-body');
+  const list=getWishlist();
+  const deals=allDeals.filter(d=>list.includes(d.id));
+  if(!deals.length){
+    body.innerHTML='<div class="empty-state"><div class="empty-icon">💜</div><p>Нажмите ♡ на карточке скидки,<br>чтобы сохранить её сюда</p></div>';
+    return;
+  }
+  body.innerHTML='<div class="grid-wrap" style="padding:0 16px 20px">'+deals.map(d=>cardHTML(d)).join('')+'</div>';
+}
+
+// ── Deal Detail ──
+function openDeal(id){
+  const d=allDeals.find(x=>x.id===id);
+  if(!d) return;
+  const store=getStore(d.store_id);
+  const tl=timeLeft(d.ends_at);
+  const w=isInWishlist(id);
+  const bgColor=(store.color||'#333')+'33';
+  const imgBlock=d.image
+    ? `<img class="detail-img" src="${d.image}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+    : '';
+  const placeholderBlock=`<div class="detail-img-placeholder" style="${d.image?'display:none':'display:flex'};background:${bgColor}">${store.logo}</div>`;
+
+  let priceRow='';
+  if(d.is_free||d.price_current===0){
+    priceRow='<span class="detail-price" style="color:var(--accent)">Бесплатно</span>';
+  } else if(d.price_current){
+    priceRow=`<span class="detail-price">${d.price_current.toLocaleString('ru')} ${d.currency||'₽'}</span>`;
+    if(d.price_old>0) priceRow+=`<span class="detail-price-old">${d.price_old.toLocaleString('ru')} ₽</span>`;
+    if(d.discount>0) priceRow+=`<span class="detail-discount">-${d.discount}%</span>`;
+  }
+
+  let savingHTML='';
+  if(d.price_old>0 && d.price_current>0 && d.price_old>d.price_current){
+    savingHTML=`<div class="detail-saving">Экономия ${(d.price_old-d.price_current).toLocaleString('ru')} ₽</div>`;
+  }
+
+  let tagsHTML='';
+  if(d.tags && d.tags.length){
+    tagsHTML='<div class="detail-tags">'+d.tags.map(t=>`<span class="detail-tag">${t}</span>`).join('')+'</div>';
+  }
+
+  let timerHTML='';
+  if(tl) timerHTML=`<div class="detail-timer"><svg width="14" height="14" viewBox="0 0 512 512" fill="none" stroke="currentColor" stroke-width="36" stroke-linecap="round" stroke-linejoin="round"><path d="M256 64C150 64 64 150 64 256s86 192 192 192 192-86 192-192S362 64 256 64z"/><polyline points="256 128 256 272 352 320"/></svg> Осталось ${tl}</div>`;
+
+  document.getElementById('detailModal').innerHTML=`
+    <div class="detail-close">
+      <div class="detail-close-btn" onclick="closeDeal()"><svg width="16" height="16" viewBox="0 0 512 512" fill="none" stroke="currentColor" stroke-width="48" stroke-linecap="round"><line x1="368" y1="368" x2="144" y2="144"/><line x1="368" y1="144" x2="144" y2="368"/></svg></div>
+      <div class="detail-share-btn" onclick="shareDeal('${id}')"><svg width="18" height="18" viewBox="0 0 512 512" fill="none" stroke="currentColor" stroke-width="36" stroke-linecap="round" stroke-linejoin="round"><path d="M336 192h40a40 40 0 0140 40v192a40 40 0 01-40 40H136a40 40 0 01-40-40V232a40 40 0 0140-40h40"/><polyline points="256 48 336 128 176 128 256 48"/><line x1="256" y1="48" x2="256" y2="320"/></svg></div>
+    </div>
+    ${imgBlock}${placeholderBlock}
+    <div class="detail-body">
+      <div class="detail-store"><span class="detail-store-logo">${store.logo}</span><span class="detail-store-name">${store.name}</span></div>
+      <div class="detail-title">${d.title||''}</div>
+      <div class="detail-subtitle">${d.subtitle||''}</div>
+      ${timerHTML}
+      <div class="detail-price-row">${priceRow}</div>
+      ${savingHTML}
+      ${tagsHTML}
+      <div class="detail-actions">
+        <button class="detail-btn detail-btn-primary" onclick="window.open('${d.url||'#'}','_blank')">Перейти к скидке →</button>
+        <button class="detail-btn detail-btn-secondary detail-wish-btn${w?' wishlisted':''}" onclick="toggleWishlist('${id}')">${heartSVG(w)} ${w?'В избранном':'В избранное'}</button>
+      </div>
+    </div>`;
+  document.getElementById('detailOverlay').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeDeal(){
+  document.getElementById('detailOverlay').classList.remove('open');
+  document.body.style.overflow='';
+}
+
+// ── Share ──
+function shareDeal(id){
+  const d=allDeals.find(x=>x.id===id);
+  if(!d) return;
+  const text=`${d.title} — ${d.is_free?'Бесплатно':d.price_current?d.price_current.toLocaleString('ru')+' '+(d.currency||'₽'):'Скидка'}${d.discount?' (-'+d.discount+'%)':''}`;
+  const url=d.url||location.href;
+  if(navigator.share){
+    navigator.share({title:'DealHunter',text,url}).catch(()=>{});
+  } else {
+    navigator.clipboard.writeText(text+' '+url).then(()=>alert('Ссылка скопирована!')).catch(()=>{});
+  }
+}
+
 // ── Tab Switching ──
 document.querySelectorAll('.tab').forEach(tab=>{
   tab.onclick=()=>{
@@ -642,6 +799,7 @@ document.querySelectorAll('.tab').forEach(tab=>{
     document.getElementById('wishlistScreen').classList.toggle('active',activeTab==='wishlist');
     document.getElementById('profileScreen').classList.toggle('active',activeTab==='profile');
     if(activeTab==='search') document.getElementById('searchInput').focus();
+    if(activeTab==='wishlist') renderWishlist();
   };
 });
 
@@ -651,7 +809,7 @@ window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPro
 document.getElementById('installBtn').onclick=()=>{if(deferredPrompt){deferredPrompt.prompt();deferredPrompt.userChoice.then(()=>{document.getElementById('installBanner').classList.remove('show');deferredPrompt=null;})}};
 
 // ── Service Worker ──
-if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 
 // ── Timer update ──
 setInterval(updateTimer,1000);
@@ -664,6 +822,7 @@ async function init(){
     allDeals=await fetchDeals();
     renderHome();
     startFeedRotation();
+    document.getElementById('statSaved').textContent=getWishlist().length;
   }catch(err){
     document.getElementById('content').innerHTML='<div style="text-align:center;padding:60px 20px;color:var(--muted)">Не удалось загрузить скидки.<br>Попробуйте позже.</div>';
   }
