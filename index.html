@@ -825,11 +825,6 @@ function renderHome(){
 
   content.innerHTML=html;
   updateTimer();
-
-  // Update profile stats
-  const storeSet=new Set(deals.map(d=>d.store_id));
-  document.getElementById('statDeals').textContent=deals.length;
-  document.getElementById('statStores').textContent=storeSet.size;
 }
 
 // ── Search ──
@@ -857,7 +852,6 @@ function toggleWishlist(id){
   saveWishlist(list);
   refreshHearts();
   renderWishlist();
-  document.getElementById('statSaved').textContent=getWishlist().length;
   const btn=document.querySelector('.detail-wish-btn');
   if(btn){
     const w=list.includes(id);
@@ -1077,8 +1071,7 @@ async function init(){
     allDeals=await fetchDeals();
     renderHome();
     startFeedRotation();
-    document.getElementById('statSaved').textContent=getWishlist().length;
-  }catch(err){
+    }catch(err){
     document.getElementById('content').innerHTML='<div style="text-align:center;padding:60px 20px;color:var(--muted)">Не удалось загрузить скидки.<br>Попробуйте позже.</div>';
   }
 }
