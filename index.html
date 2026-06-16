@@ -265,17 +265,35 @@ button{font-family:inherit}
 .empty-state p{font-size:14px}
 
 /* ── Profile Screen ── */
-.prof-card{background:var(--card);border-radius:var(--r-lg);padding:16px;border:1px solid var(--border);margin-bottom:12px}
+.prof-card{background:var(--card);border-radius:var(--r-lg);padding:16px;border:2px solid var(--accent);margin-bottom:16px}
 .prof-user{display:flex;align-items:center;gap:12px}
-.prof-avatar{width:52px;height:52px;border-radius:26px;background:var(--accentGlow);display:flex;align-items:center;justify-content:center;font-size:26px;border:2px solid var(--accent);flex-shrink:0}
+.prof-avatar{width:60px;height:60px;border-radius:30px;background:var(--accentGlow);display:flex;align-items:center;justify-content:center;font-size:32px;border:2px solid var(--accent);flex-shrink:0}
 .prof-info{flex:1;min-width:0}
-.prof-name{font-size:17px;font-weight:800;color:var(--text)}
-.prof-rank{font-size:12px;color:var(--text2);margin-top:2px}
-.prof-trophy{display:flex;align-items:center;gap:4px;background:var(--card2);border-radius:var(--r-pill);padding:4px 10px;font-size:13px;font-weight:700;color:var(--accent);flex-shrink:0}
+.prof-name{font-size:20px;font-weight:900;color:var(--accent)}
+.prof-rank{font-size:13px;color:var(--text2);margin-top:2px}
+.prof-xp-badge{background:var(--accent);color:#fff;border-radius:var(--r-pill);padding:6px 14px;font-size:14px;font-weight:800;flex-shrink:0}
 .prof-xp-bar{height:4px;background:var(--border);border-radius:2px;margin-top:12px;overflow:hidden}
 .prof-xp-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .3s}
-.prof-streak{display:flex;align-items:center;justify-content:space-between;padding:10px 0 0;margin-top:10px;border-top:1px solid var(--border);font-size:13px;color:var(--text2)}
-.prof-streak-left{display:flex;align-items:center;gap:6px}
+.prof-xp-label{font-size:12px;color:var(--text2);margin-top:6px}
+.prof-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.prof-stat{background:var(--card);border-radius:var(--r-lg);padding:16px 12px;border:1px solid var(--border);text-align:center}
+.prof-stat-icon{font-size:28px;margin-bottom:6px}
+.prof-stat-val{font-size:22px;font-weight:900;color:var(--text)}
+.prof-stat-label{font-size:11px;color:var(--muted);margin-top:4px;font-weight:600}
+.prof-ach-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.prof-ach-title{font-size:20px;font-weight:900;color:var(--text)}
+.prof-ach-count{background:var(--accent);color:#fff;border-radius:var(--r-pill);padding:4px 12px;font-size:13px;font-weight:700}
+.prof-ach-section{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
+.prof-ach-item{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:var(--r-lg);padding:14px;border:1px solid var(--border);margin-bottom:8px}
+.prof-ach-item.unlocked{border-color:var(--accent);background:var(--accentGlow)}
+.prof-ach-lock{width:36px;height:36px;border-radius:10px;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.prof-ach-item.unlocked .prof-ach-lock{background:var(--accent)}
+.prof-ach-body{flex:1;min-width:0}
+.prof-ach-name{font-size:15px;font-weight:700;color:var(--text)}
+.prof-ach-item:not(.unlocked) .prof-ach-name{color:var(--text2)}
+.prof-ach-desc{font-size:12px;color:var(--muted);margin-top:2px}
+.prof-ach-xp{background:var(--card2);color:var(--accent);border-radius:var(--r-pill);padding:4px 10px;font-size:12px;font-weight:700;flex-shrink:0}
+.prof-ach-item.unlocked .prof-ach-xp{background:var(--accent);color:#fff}
 .prof-link{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:var(--r-lg);padding:16px;border:1px solid var(--border);margin-bottom:12px;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .prof-link:active{background:var(--card2)}
 .prof-link-icon{width:44px;height:44px;border-radius:22px;background:var(--accentGlow);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
@@ -380,7 +398,7 @@ button{font-family:inherit}
   <!-- ═══ PROFILE SCREEN ═══ -->
   <div id="profileScreen" class="profile-screen">
     <div class="screen-header">
-      <h2>Профиль</h2>
+      <h2>Профиль охотника</h2>
     </div>
     <div class="screen-body">
 
@@ -388,17 +406,31 @@ button{font-family:inherit}
         <div class="prof-user">
           <div class="prof-avatar">🐣</div>
           <div class="prof-info">
-            <div class="prof-name">Новичок</div>
-            <div class="prof-rank">Уровень 1 • 0 XP</div>
+            <div class="prof-name" id="profRankName">Новичок</div>
+            <div class="prof-rank">Уровень <span id="profLevel">1</span></div>
           </div>
-          <div class="prof-trophy">🏆 <span id="profAchievements">0/22</span></div>
+          <div class="prof-xp-badge" id="profXpBadge">0 XP</div>
         </div>
         <div class="prof-xp-bar"><div class="prof-xp-fill" style="width:0%"></div></div>
-        <div class="prof-streak" onclick="showAchievementsModal()" style="cursor:pointer">
-          <div class="prof-streak-left">🔥 <span id="profStreak">1</span> дн подряд • Сэкономлено <span id="profSaved">0</span> ₽</div>
-          <span style="color:var(--muted)">›</span>
-        </div>
+        <div class="prof-xp-label" id="profXpLabel">0 / 50 XP до «Охотник» 🎯</div>
       </div>
+
+      <div class="prof-stats">
+        <div class="prof-stat"><div class="prof-stat-icon">💰</div><div class="prof-stat-val" id="profSaved">0 ₽</div><div class="prof-stat-label">Сэкономлено</div></div>
+        <div class="prof-stat"><div class="prof-stat-icon">🎯</div><div class="prof-stat-val" id="profDealsFound">0</div><div class="prof-stat-label">Скидок найдено</div></div>
+        <div class="prof-stat"><div class="prof-stat-icon">📢</div><div class="prof-stat-val" id="profShares">0</div><div class="prof-stat-label">Поделился</div></div>
+        <div class="prof-stat"><div class="prof-stat-icon">🕵️</div><div class="prof-stat-val" id="profReports">0</div><div class="prof-stat-label">Фейков раскрыто</div></div>
+        <div class="prof-stat"><div class="prof-stat-icon">🔥</div><div class="prof-stat-val" id="profStreak">1</div><div class="prof-stat-label">Дней подряд</div></div>
+        <div class="prof-stat"><div class="prof-stat-icon">❤️</div><div class="prof-stat-val" id="profWishes">0</div><div class="prof-stat-label">В вишлисте</div></div>
+      </div>
+
+      <div class="prof-ach-header">
+        <div class="prof-ach-title">Достижения</div>
+        <div class="prof-ach-count" id="profAchCount">0 / 22</div>
+      </div>
+      <div id="profAchList"></div>
+
+      <div style="height:12px"></div>
 
       <div class="prof-link" id="profAccountLink" onclick="showAccountModal()">
         <div class="prof-link-icon">👤</div>
@@ -407,43 +439,6 @@ button{font-family:inherit}
           <div class="prof-link-desc" id="profAccountDesc">Сохрани список и получай уведомления</div>
         </div>
         <span class="prof-link-arrow">›</span>
-      </div>
-
-      <div class="prof-pro" onclick="showProModal()" style="cursor:pointer">
-        <div class="prof-pro-head">
-          <div>
-            <div class="prof-pro-title">DealHunter PRO</div>
-            <div class="prof-pro-sub">Охоться на скидки как профи</div>
-          </div>
-          <div class="prof-pro-price">249 ₽/мес</div>
-        </div>
-        <div class="prof-pro-features">
-          <div class="prof-pro-feat"><span>⚡</span><span>Ранний доступ к скидкам на 2 часа раньше</span></div>
-          <div class="prof-pro-feat"><span>📊</span><span>Полная история цен за 90 дней</span></div>
-          <div class="prof-pro-feat"><span>🔔</span><span>Мгновенные push при падении цены</span></div>
-          <div class="prof-pro-feat"><span>🎯</span><span>Безлимитное отслеживание по порогу цены</span></div>
-          <div class="prof-pro-feat"><span>❤️</span><span>Безлимитный список желаний</span></div>
-          <div class="prof-pro-feat"><span>🔍</span><span>Отслеживание по ключевым словам</span></div>
-          <div class="prof-pro-feat"><span>🚫</span><span>Без рекламы</span></div>
-        </div>
-      </div>
-
-      <div class="prof-link" onclick="showKeywordsModal()">
-        <div class="prof-link-icon">🔎</div>
-        <div class="prof-link-body">
-          <div class="prof-link-title">Отслеживание по словам</div>
-          <div class="prof-link-desc">Push-уведомления о новых скидках по вашим словам</div>
-        </div>
-        <span class="prof-link-arrow">›</span>
-      </div>
-
-      <div class="prof-invite" onclick="inviteFriend()">
-        <div class="prof-invite-icon">🎁</div>
-        <div class="prof-invite-body">
-          <div class="prof-invite-title">Пригласи друга</div>
-          <div class="prof-invite-desc">Получите 7 дней PRO бесплатно вдвоём</div>
-        </div>
-        <span class="prof-invite-arrow">›</span>
       </div>
 
       <div class="prof-section">УВЕДОМЛЕНИЯ</div>
@@ -494,11 +489,6 @@ button{font-family:inherit}
         <div class="prof-toggle-row" style="cursor:pointer" onclick="window.open('https://dealhunterapp.online','_blank')">
           <span class="prof-toggle-icon">📱</span>
           <span class="prof-toggle-label">Скачать приложение</span>
-          <span style="color:var(--muted);font-size:18px">›</span>
-        </div>
-        <div class="prof-toggle-row" style="cursor:pointer">
-          <span class="prof-toggle-icon">⭐</span>
-          <span class="prof-toggle-label">Оценить приложение</span>
           <span style="color:var(--muted);font-size:18px">›</span>
         </div>
         <div class="prof-toggle-row" style="cursor:pointer">
@@ -1164,19 +1154,54 @@ function updateProfileUI(){
   const el=id=>document.getElementById(id);
   const av=document.querySelector('.prof-avatar');
   if(av) av.textContent=rank.emoji;
-  const nm=document.querySelector('.prof-name');
+  const nm=el('profRankName');
   if(nm) nm.textContent=authProfile?.display_name||p.userName||rank.name;
-  const rk=document.querySelector('.prof-rank');
-  if(rk) rk.textContent=`Уровень ${RANKS.indexOf(rank)+1} • ${p.xp} XP`;
-  const ach=el('profAchievements');
-  if(ach) ach.textContent=`${p.unlocked.length}/${ACHIEVEMENTS.length}`;
+  const lvl=el('profLevel');
+  if(lvl) lvl.textContent=RANKS.indexOf(rank)+1;
+  const xpBadge=el('profXpBadge');
+  if(xpBadge) xpBadge.textContent=p.xp+' XP';
   const bar=document.querySelector('.prof-xp-fill');
   if(bar&&next) bar.style.width=Math.min(100,((p.xp-rank.xp)/(next.xp-rank.xp))*100)+'%';
   else if(bar) bar.style.width='100%';
+  const xpLabel=el('profXpLabel');
+  if(xpLabel&&next) xpLabel.textContent=`${p.xp} / ${next.xp} XP до «${next.name}» ${next.emoji}`;
+  else if(xpLabel) xpLabel.textContent='Максимальный ранг достигнут!';
+  // stats
+  const saved=el('profSaved');
+  if(saved) saved.textContent=calcSaved().toLocaleString('ru')+' ₽';
+  const df=el('profDealsFound');
+  if(df) df.textContent=p.views;
+  const sh=el('profShares');
+  if(sh) sh.textContent=p.shares;
+  const rp=el('profReports');
+  if(rp) rp.textContent=p.reports;
   const streak=el('profStreak');
   if(streak) streak.textContent=p.streak;
-  const saved=el('profSaved');
-  if(saved) saved.textContent=calcSaved().toLocaleString('ru');
+  const wishes=el('profWishes');
+  if(wishes) wishes.textContent=getWishlist().length;
+  // achievements count
+  const achCount=el('profAchCount');
+  if(achCount) achCount.textContent=`${p.unlocked.length} / ${ACHIEVEMENTS.length}`;
+  // render achievements inline
+  const achList=el('profAchList');
+  if(achList){
+    const unlocked=ACHIEVEMENTS.filter(a=>p.unlocked.includes(a.id));
+    const locked=ACHIEVEMENTS.filter(a=>!p.unlocked.includes(a.id));
+    let html='';
+    if(unlocked.length){
+      html+=`<div class="prof-ach-section">РАЗБЛОКИРОВАННЫЕ</div>`;
+      unlocked.forEach(a=>{
+        html+=`<div class="prof-ach-item unlocked"><div class="prof-ach-lock">${a.icon}</div><div class="prof-ach-body"><div class="prof-ach-name">${a.name}</div><div class="prof-ach-desc">${a.desc}</div></div><div class="prof-ach-xp">+${achXP(a.id)} XP</div></div>`;
+      });
+    }
+    if(locked.length){
+      html+=`<div class="prof-ach-section">${unlocked.length?'':''}ЗАБЛОКИРОВАННЫЕ</div>`;
+      locked.forEach(a=>{
+        html+=`<div class="prof-ach-item"><div class="prof-ach-lock">🔒</div><div class="prof-ach-body"><div class="prof-ach-name">${a.name}</div><div class="prof-ach-desc">${a.desc}</div></div><div class="prof-ach-xp">+${achXP(a.id)} XP</div></div>`;
+      });
+    }
+    achList.innerHTML=html;
+  }
   // account link
   const accTitle=el('profAccountTitle');
   const accDesc=el('profAccountDesc');
@@ -1194,6 +1219,11 @@ function updateProfileUI(){
   // toggles
   document.querySelectorAll('[data-notif]').forEach(inp=>{inp.checked=p.notif[inp.dataset.notif]!==false;});
   document.querySelectorAll('[data-interest]').forEach(inp=>{inp.checked=p.interests[inp.dataset.interest]!==false;});
+}
+
+function achXP(id){
+  const xpMap={first_view:5,views_10:15,views_50:30,views_100:50,first_wish:5,wishes_5:20,wishes_20:40,first_share:10,shares_5:25,first_report:15,streak_3:15,streak_7:30,streak_30:100,xp_100:20,xp_500:50,xp_1000:100,cats_all:10,first_keyword:10,saved_1000:25,saved_10000:50,invite:20,night_owl:15};
+  return xpMap[id]||10;
 }
 
 function initProfileToggles(){
