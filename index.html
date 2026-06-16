@@ -265,13 +265,13 @@ button{font-family:inherit}
 .empty-state p{font-size:14px}
 
 /* ── Profile Screen ── */
-.prof-card{background:var(--card);border-radius:var(--r-lg);padding:16px;border:2px solid var(--accent);margin-bottom:16px}
+.prof-card{background:var(--card);border-radius:var(--r-lg);padding:16px;border:1px solid var(--border);margin-bottom:12px}
 .prof-user{display:flex;align-items:center;gap:12px}
 .prof-avatar{width:60px;height:60px;border-radius:30px;background:var(--accentGlow);display:flex;align-items:center;justify-content:center;font-size:32px;border:2px solid var(--accent);flex-shrink:0}
 .prof-info{flex:1;min-width:0}
-.prof-name{font-size:20px;font-weight:900;color:var(--accent)}
-.prof-rank{font-size:13px;color:var(--text2);margin-top:2px}
-.prof-xp-badge{background:var(--accent);color:#fff;border-radius:var(--r-pill);padding:6px 14px;font-size:14px;font-weight:800;flex-shrink:0}
+.prof-name{font-size:17px;font-weight:800;color:var(--text)}
+.prof-rank{font-size:12px;color:var(--text2);margin-top:2px}
+.prof-trophy{display:flex;align-items:center;gap:4px;background:var(--card2);border-radius:var(--r-pill);padding:4px 10px;font-size:13px;font-weight:700;color:var(--accent);flex-shrink:0}
 .prof-xp-bar{height:4px;background:var(--border);border-radius:2px;margin-top:12px;overflow:hidden}
 .prof-xp-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .3s}
 .prof-xp-label{font-size:12px;color:var(--text2);margin-top:6px}
@@ -398,39 +398,25 @@ button{font-family:inherit}
   <!-- ═══ PROFILE SCREEN ═══ -->
   <div id="profileScreen" class="profile-screen">
     <div class="screen-header">
-      <h2>Профиль охотника</h2>
+      <h2>Профиль</h2>
     </div>
     <div class="screen-body">
 
-      <div class="prof-card">
+      <div class="prof-card" onclick="showHunterProfile()" style="cursor:pointer">
         <div class="prof-user">
           <div class="prof-avatar">🐣</div>
           <div class="prof-info">
             <div class="prof-name" id="profRankName">Новичок</div>
-            <div class="prof-rank">Уровень <span id="profLevel">1</span></div>
+            <div class="prof-rank">Уровень <span id="profLevel">1</span> • <span id="profXpSmall">0</span> XP</div>
           </div>
-          <div class="prof-xp-badge" id="profXpBadge">0 XP</div>
+          <div class="prof-trophy">🏆 <span id="profAchSmall">0/22</span></div>
         </div>
         <div class="prof-xp-bar"><div class="prof-xp-fill" style="width:0%"></div></div>
-        <div class="prof-xp-label" id="profXpLabel">0 / 50 XP до «Охотник» 🎯</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding-top:8px;margin-top:8px;border-top:1px solid var(--border);font-size:13px;color:var(--text2)">
+          <div>🔥 <span id="profStreakSmall">1</span> дн подряд</div>
+          <span style="color:var(--muted)">›</span>
+        </div>
       </div>
-
-      <div class="prof-stats">
-        <div class="prof-stat"><div class="prof-stat-icon">💰</div><div class="prof-stat-val" id="profSaved">0 ₽</div><div class="prof-stat-label">Сэкономлено</div></div>
-        <div class="prof-stat"><div class="prof-stat-icon">🎯</div><div class="prof-stat-val" id="profDealsFound">0</div><div class="prof-stat-label">Скидок найдено</div></div>
-        <div class="prof-stat"><div class="prof-stat-icon">📢</div><div class="prof-stat-val" id="profShares">0</div><div class="prof-stat-label">Поделился</div></div>
-        <div class="prof-stat"><div class="prof-stat-icon">🕵️</div><div class="prof-stat-val" id="profReports">0</div><div class="prof-stat-label">Фейков раскрыто</div></div>
-        <div class="prof-stat"><div class="prof-stat-icon">🔥</div><div class="prof-stat-val" id="profStreak">1</div><div class="prof-stat-label">Дней подряд</div></div>
-        <div class="prof-stat"><div class="prof-stat-icon">❤️</div><div class="prof-stat-val" id="profWishes">0</div><div class="prof-stat-label">В вишлисте</div></div>
-      </div>
-
-      <div class="prof-ach-header">
-        <div class="prof-ach-title">Достижения</div>
-        <div class="prof-ach-count" id="profAchCount">0 / 22</div>
-      </div>
-      <div id="profAchList"></div>
-
-      <div style="height:12px"></div>
 
       <div class="prof-link" id="profAccountLink" onclick="showAccountModal()">
         <div class="prof-link-icon">👤</div>
@@ -1158,50 +1144,15 @@ function updateProfileUI(){
   if(nm) nm.textContent=authProfile?.display_name||p.userName||rank.name;
   const lvl=el('profLevel');
   if(lvl) lvl.textContent=RANKS.indexOf(rank)+1;
-  const xpBadge=el('profXpBadge');
-  if(xpBadge) xpBadge.textContent=p.xp+' XP';
+  const xpSmall=el('profXpSmall');
+  if(xpSmall) xpSmall.textContent=p.xp;
   const bar=document.querySelector('.prof-xp-fill');
   if(bar&&next) bar.style.width=Math.min(100,((p.xp-rank.xp)/(next.xp-rank.xp))*100)+'%';
   else if(bar) bar.style.width='100%';
-  const xpLabel=el('profXpLabel');
-  if(xpLabel&&next) xpLabel.textContent=`${p.xp} / ${next.xp} XP до «${next.name}» ${next.emoji}`;
-  else if(xpLabel) xpLabel.textContent='Максимальный ранг достигнут!';
-  // stats
-  const saved=el('profSaved');
-  if(saved) saved.textContent=calcSaved().toLocaleString('ru')+' ₽';
-  const df=el('profDealsFound');
-  if(df) df.textContent=p.views;
-  const sh=el('profShares');
-  if(sh) sh.textContent=p.shares;
-  const rp=el('profReports');
-  if(rp) rp.textContent=p.reports;
-  const streak=el('profStreak');
-  if(streak) streak.textContent=p.streak;
-  const wishes=el('profWishes');
-  if(wishes) wishes.textContent=getWishlist().length;
-  // achievements count
-  const achCount=el('profAchCount');
-  if(achCount) achCount.textContent=`${p.unlocked.length} / ${ACHIEVEMENTS.length}`;
-  // render achievements inline
-  const achList=el('profAchList');
-  if(achList){
-    const unlocked=ACHIEVEMENTS.filter(a=>p.unlocked.includes(a.id));
-    const locked=ACHIEVEMENTS.filter(a=>!p.unlocked.includes(a.id));
-    let html='';
-    if(unlocked.length){
-      html+=`<div class="prof-ach-section">РАЗБЛОКИРОВАННЫЕ</div>`;
-      unlocked.forEach(a=>{
-        html+=`<div class="prof-ach-item unlocked"><div class="prof-ach-lock">${a.icon}</div><div class="prof-ach-body"><div class="prof-ach-name">${a.name}</div><div class="prof-ach-desc">${a.desc}</div></div><div class="prof-ach-xp">+${achXP(a.id)} XP</div></div>`;
-      });
-    }
-    if(locked.length){
-      html+=`<div class="prof-ach-section">${unlocked.length?'':''}ЗАБЛОКИРОВАННЫЕ</div>`;
-      locked.forEach(a=>{
-        html+=`<div class="prof-ach-item"><div class="prof-ach-lock">🔒</div><div class="prof-ach-body"><div class="prof-ach-name">${a.name}</div><div class="prof-ach-desc">${a.desc}</div></div><div class="prof-ach-xp">+${achXP(a.id)} XP</div></div>`;
-      });
-    }
-    achList.innerHTML=html;
-  }
+  const achSmall=el('profAchSmall');
+  if(achSmall) achSmall.textContent=`${p.unlocked.length}/${ACHIEVEMENTS.length}`;
+  const streakSmall=el('profStreakSmall');
+  if(streakSmall) streakSmall.textContent=p.streak;
   // account link
   const accTitle=el('profAccountTitle');
   const accDesc=el('profAccountDesc');
@@ -1282,6 +1233,60 @@ function showKeywordsModal(){
       <div style="margin-top:16px;color:var(--muted);font-size:12px;line-height:18px">Мы проверяем каждую новую скидку и покажем уведомление, если она совпадёт с вашими словами.</div>
     </div>`;
   renderKeywords();
+  overlay.classList.add('open');
+  document.body.style.overflow='hidden';
+}
+
+function showHunterProfile(){
+  const p=getProfile();
+  const rank=getRank(p.xp);
+  const next=getNextRank(p.xp);
+  const lvl=RANKS.indexOf(rank)+1;
+  const pct=next?Math.min(100,((p.xp-rank.xp)/(next.xp-rank.xp))*100):100;
+  const xpLabel=next?`${p.xp} / ${next.xp} XP до «${next.name}» ${next.emoji}`:'Максимальный ранг!';
+  const saved=calcSaved().toLocaleString('ru');
+  const unlocked=ACHIEVEMENTS.filter(a=>p.unlocked.includes(a.id));
+  const locked=ACHIEVEMENTS.filter(a=>!p.unlocked.includes(a.id));
+  let achHTML='';
+  if(unlocked.length){
+    achHTML+=`<div class="prof-ach-section" style="margin-top:16px">РАЗБЛОКИРОВАННЫЕ</div>`;
+    unlocked.forEach(a=>{achHTML+=`<div class="prof-ach-item unlocked"><div class="prof-ach-lock">${a.icon}</div><div class="prof-ach-body"><div class="prof-ach-name">${a.name}</div><div class="prof-ach-desc">${a.desc}</div></div><div class="prof-ach-xp">+${achXP(a.id)} XP</div></div>`;});
+  }
+  if(locked.length){
+    achHTML+=`<div class="prof-ach-section" style="margin-top:16px">ЗАБЛОКИРОВАННЫЕ</div>`;
+    locked.forEach(a=>{achHTML+=`<div class="prof-ach-item"><div class="prof-ach-lock">🔒</div><div class="prof-ach-body"><div class="prof-ach-name">${a.name}</div><div class="prof-ach-desc">${a.desc}</div></div><div class="prof-ach-xp">+${achXP(a.id)} XP</div></div>`;});
+  }
+  const overlay=document.getElementById('detailOverlay');
+  const modal=document.getElementById('detailModal');
+  modal.innerHTML=`
+    <div class="detail-img-wrap" style="background:var(--card);padding:20px;padding-top:max(20px,env(safe-area-inset-top))">
+      <div class="detail-back-btn" onclick="closeDeal()"><svg width="20" height="20" viewBox="0 0 512 512" fill="none" stroke="currentColor" stroke-width="48" stroke-linecap="round" stroke-linejoin="round"><polyline points="328 112 184 256 328 400"/></svg></div>
+      <div style="text-align:center;font-size:40px;margin:20px 0 10px">${rank.emoji}</div>
+      <div style="text-align:center;font-size:20px;font-weight:900;color:var(--accent)">Профиль охотника</div>
+      <div style="text-align:center;font-size:13px;color:var(--text2);margin-top:4px">Уровень ${lvl} • ${p.xp} XP</div>
+    </div>
+    <div class="detail-body" style="padding-top:16px">
+      <div style="background:var(--card);border-radius:var(--r-lg);padding:16px;border:2px solid var(--accent);margin-bottom:16px">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="width:60px;height:60px;border-radius:30px;background:var(--accentGlow);display:flex;align-items:center;justify-content:center;font-size:32px;border:2px solid var(--accent)">${rank.emoji}</div>
+          <div style="flex:1"><div style="font-size:20px;font-weight:900;color:var(--accent)">${authProfile?.display_name||p.userName||rank.name}</div><div style="font-size:13px;color:var(--text2);margin-top:2px">Уровень ${lvl}</div></div>
+          <div style="background:var(--accent);color:#fff;border-radius:20px;padding:6px 14px;font-size:14px;font-weight:800">${p.xp} XP</div>
+        </div>
+        <div style="height:4px;background:var(--border);border-radius:2px;margin-top:12px;overflow:hidden"><div style="height:100%;background:var(--accent);border-radius:2px;width:${pct}%"></div></div>
+        <div style="font-size:12px;color:var(--text2);margin-top:6px">${xpLabel}</div>
+      </div>
+      <div class="prof-stats">
+        <div class="prof-stat"><div class="prof-stat-icon">💰</div><div class="prof-stat-val">${saved} ₽</div><div class="prof-stat-label">Сэкономлено</div></div>
+        <div class="prof-stat"><div class="prof-stat-icon">🎯</div><div class="prof-stat-val">${p.views}</div><div class="prof-stat-label">Скидок найдено</div></div>
+        <div class="prof-stat"><div class="prof-stat-icon">📢</div><div class="prof-stat-val">${p.shares}</div><div class="prof-stat-label">Поделился</div></div>
+        <div class="prof-stat"><div class="prof-stat-icon">🕵️</div><div class="prof-stat-val">${p.reports}</div><div class="prof-stat-label">Фейков раскрыто</div></div>
+        <div class="prof-stat"><div class="prof-stat-icon">🔥</div><div class="prof-stat-val">${p.streak}</div><div class="prof-stat-label">Дней подряд</div></div>
+        <div class="prof-stat"><div class="prof-stat-icon">❤️</div><div class="prof-stat-val">${getWishlist().length}</div><div class="prof-stat-label">В вишлисте</div></div>
+      </div>
+      <div class="prof-ach-header"><div class="prof-ach-title">Достижения</div><div class="prof-ach-count">${p.unlocked.length} / ${ACHIEVEMENTS.length}</div></div>
+      ${achHTML}
+      <div style="height:40px"></div>
+    </div>`;
   overlay.classList.add('open');
   document.body.style.overflow='hidden';
 }
