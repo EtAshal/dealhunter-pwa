@@ -570,7 +570,7 @@ async function authSignOut(){
 async function authTelegram(){
   const token=Math.random().toString(36).slice(2,10)+Date.now().toString(36);
   await sb.from('telegram_auth').insert({token,status:'pending'});
-  window.open('https://t.me/'+TG_BOT+'?start='+token,'_blank');
+  const a=document.createElement('a');a.href='https://t.me/'+TG_BOT+'?start='+token;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();document.body.removeChild(a);
   return new Promise((resolve,reject)=>{
     let att=0;
     const iv=setInterval(async()=>{
