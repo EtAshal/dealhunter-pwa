@@ -248,22 +248,52 @@ button{font-family:inherit}
 .empty-state p{font-size:14px}
 
 /* ── Profile Screen ── */
-.profile-card{background:var(--card);border-radius:var(--r-lg);padding:20px;border:1px solid var(--border);text-align:center;margin-bottom:16px}
-.profile-avatar{width:64px;height:64px;border-radius:32px;background:var(--accentGlow);display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 12px;border:2px solid var(--accent)}
-.profile-name{font-size:18px;font-weight:800;color:var(--text)}
-.profile-sub{font-size:12px;color:var(--text2);margin-top:4px}
-.profile-stats{display:flex;justify-content:center;gap:24px;margin-top:16px}
-.profile-stat{text-align:center}
-.profile-stat-num{font-size:20px;font-weight:900;color:var(--accent)}
-.profile-stat-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
-.profile-menu{display:flex;flex-direction:column;gap:2px}
-.profile-menu-item{display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--card);border-radius:var(--r-md);border:1px solid var(--border);cursor:pointer}
-.profile-menu-item:active{background:var(--card2)}
-.profile-menu-icon{font-size:20px;width:28px;text-align:center}
-.profile-menu-text{flex:1;font-size:14px;font-weight:600;color:var(--text)}
-.profile-menu-arrow{color:var(--muted);font-size:14px}
-.profile-footer{text-align:center;padding:24px;color:var(--muted);font-size:12px;margin-top:16px}
-.profile-footer a{color:var(--accent)}
+.prof-card{background:var(--card);border-radius:var(--r-lg);padding:16px;border:1px solid var(--border);margin-bottom:12px}
+.prof-user{display:flex;align-items:center;gap:12px}
+.prof-avatar{width:52px;height:52px;border-radius:26px;background:var(--accentGlow);display:flex;align-items:center;justify-content:center;font-size:26px;border:2px solid var(--accent);flex-shrink:0}
+.prof-info{flex:1;min-width:0}
+.prof-name{font-size:17px;font-weight:800;color:var(--text)}
+.prof-rank{font-size:12px;color:var(--text2);margin-top:2px}
+.prof-trophy{display:flex;align-items:center;gap:4px;background:var(--card2);border-radius:var(--r-pill);padding:4px 10px;font-size:13px;font-weight:700;color:var(--accent);flex-shrink:0}
+.prof-xp-bar{height:4px;background:var(--border);border-radius:2px;margin-top:12px;overflow:hidden}
+.prof-xp-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .3s}
+.prof-streak{display:flex;align-items:center;justify-content:space-between;padding:10px 0 0;margin-top:10px;border-top:1px solid var(--border);font-size:13px;color:var(--text2)}
+.prof-streak-left{display:flex;align-items:center;gap:6px}
+.prof-link{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:var(--r-lg);padding:16px;border:1px solid var(--border);margin-bottom:12px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.prof-link:active{background:var(--card2)}
+.prof-link-icon{width:44px;height:44px;border-radius:22px;background:var(--accentGlow);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.prof-link-body{flex:1;min-width:0}
+.prof-link-title{font-size:15px;font-weight:700;color:var(--accent)}
+.prof-link-desc{font-size:12px;color:var(--text2);margin-top:2px}
+.prof-link-arrow{color:var(--muted);font-size:18px}
+.prof-pro{background:var(--card);border-radius:var(--r-lg);padding:20px;border:1px solid var(--accent);margin-bottom:12px}
+.prof-pro-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.prof-pro-title{font-size:18px;font-weight:900;color:var(--text)}
+.prof-pro-sub{font-size:12px;color:var(--text2);margin-top:2px}
+.prof-pro-price{background:var(--accent);color:#fff;border-radius:var(--r-md);padding:8px 14px;font-size:14px;font-weight:800;flex-shrink:0}
+.prof-pro-features{display:flex;flex-direction:column;gap:10px}
+.prof-pro-feat{display:flex;align-items:flex-start;gap:8px;font-size:14px;color:var(--text2);line-height:20px}
+.prof-pro-feat span:first-child{flex-shrink:0;font-size:16px}
+.prof-section{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin:20px 0 8px;padding:0 4px}
+.prof-toggle-row{display:flex;align-items:center;gap:12px;padding:14px 16px}
+.prof-toggle-icon{font-size:18px;width:24px;text-align:center;flex-shrink:0}
+.prof-toggle-label{flex:1;font-size:14px;font-weight:600;color:var(--text)}
+.prof-toggle{position:relative;width:48px;height:28px;flex-shrink:0}
+.prof-toggle input{opacity:0;width:0;height:0}
+.prof-toggle-track{position:absolute;inset:0;background:var(--border);border-radius:14px;cursor:pointer;transition:.2s}
+.prof-toggle-track:before{content:'';position:absolute;height:22px;width:22px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s}
+.prof-toggle input:checked+.prof-toggle-track{background:var(--accent)}
+.prof-toggle input:checked+.prof-toggle-track:before{transform:translateX(20px)}
+.prof-toggles-card{background:var(--card);border-radius:var(--r-lg);border:1px solid var(--border);overflow:hidden;margin-bottom:12px}
+.prof-toggles-card .prof-toggle-row+.prof-toggle-row{border-top:1px solid var(--border)}
+.prof-invite{background:linear-gradient(135deg,var(--accent)22,var(--accentGlow));border-radius:var(--r-lg);padding:16px;border:1px solid var(--accent);margin-bottom:12px;display:flex;align-items:center;gap:12px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.prof-invite-icon{font-size:28px;flex-shrink:0}
+.prof-invite-body{flex:1}
+.prof-invite-title{font-size:15px;font-weight:700;color:var(--accent)}
+.prof-invite-desc{font-size:12px;color:var(--text2);margin-top:2px}
+.prof-invite-arrow{color:var(--accent);font-size:18px}
+.prof-footer{text-align:center;padding:20px;color:var(--muted);font-size:11px}
+.prof-footer a{color:var(--accent)}
 
 /* Desktop */
 @media(min-width:481px){
@@ -332,23 +362,132 @@ button{font-family:inherit}
       <h2>Профиль</h2>
     </div>
     <div class="screen-body">
-      <div class="profile-card">
-        <div class="profile-avatar">🎯</div>
-        <div class="profile-name">Охотник за скидками</div>
-        <div class="profile-sub">Уровень 1 — Новичок</div>
-        <div class="profile-stats">
-          <div class="profile-stat"><div class="profile-stat-num" id="statDeals">0</div><div class="profile-stat-label">Скидок</div></div>
-          <div class="profile-stat"><div class="profile-stat-num" id="statSaved">0</div><div class="profile-stat-label">Избранное</div></div>
-          <div class="profile-stat"><div class="profile-stat-num" id="statStores">0</div><div class="profile-stat-label">Магазинов</div></div>
+
+      <div class="prof-card">
+        <div class="prof-user">
+          <div class="prof-avatar">🐣</div>
+          <div class="prof-info">
+            <div class="prof-name">Новичок</div>
+            <div class="prof-rank">Уровень 1 • 0 XP</div>
+          </div>
+          <div class="prof-trophy">🏆 <span id="profAchievements">0/22</span></div>
+        </div>
+        <div class="prof-xp-bar"><div class="prof-xp-fill" style="width:0%"></div></div>
+        <div class="prof-streak">
+          <div class="prof-streak-left">🔥 <span id="profStreak">5</span> дн подряд • Сэкономлено <span id="profSaved">0</span> ₽</div>
+          <span style="color:var(--muted)">›</span>
         </div>
       </div>
-      <div class="profile-menu">
-        <div class="profile-menu-item"><span class="profile-menu-icon">🏆</span><span class="profile-menu-text">Достижения</span><span class="profile-menu-arrow">›</span></div>
-        <div class="profile-menu-item"><span class="profile-menu-icon">🔔</span><span class="profile-menu-text">Уведомления</span><span class="profile-menu-arrow">›</span></div>
-        <div class="profile-menu-item"><span class="profile-menu-icon">⭐</span><span class="profile-menu-text">DealHunter Pro</span><span class="profile-menu-arrow">›</span></div>
-        <div class="profile-menu-item"><span class="profile-menu-icon">📱</span><span class="profile-menu-text">Скачать приложение</span><span class="profile-menu-arrow">›</span></div>
+
+      <div class="prof-link">
+        <div class="prof-link-icon">👤</div>
+        <div class="prof-link-body">
+          <div class="prof-link-title">Войти в аккаунт</div>
+          <div class="prof-link-desc">Сохрани список и получай уведомления</div>
+        </div>
+        <span class="prof-link-arrow">›</span>
       </div>
-      <div class="profile-footer">
+
+      <div class="prof-pro">
+        <div class="prof-pro-head">
+          <div>
+            <div class="prof-pro-title">DealHunter PRO</div>
+            <div class="prof-pro-sub">Охоться на скидки как профи</div>
+          </div>
+          <div class="prof-pro-price">249 ₽/мес</div>
+        </div>
+        <div class="prof-pro-features">
+          <div class="prof-pro-feat"><span>⚡</span><span>Ранний доступ к скидкам на 2 часа раньше</span></div>
+          <div class="prof-pro-feat"><span>📊</span><span>Полная история цен за 90 дней</span></div>
+          <div class="prof-pro-feat"><span>🔔</span><span>Мгновенные push при падении цены</span></div>
+          <div class="prof-pro-feat"><span>🎯</span><span>Безлимитное отслеживание по порогу цены</span></div>
+          <div class="prof-pro-feat"><span>❤️</span><span>Безлимитный список желаний</span></div>
+          <div class="prof-pro-feat"><span>🔍</span><span>Отслеживание по ключевым словам</span></div>
+          <div class="prof-pro-feat"><span>🚫</span><span>Без рекламы</span></div>
+        </div>
+      </div>
+
+      <div class="prof-link">
+        <div class="prof-link-icon">🔎</div>
+        <div class="prof-link-body">
+          <div class="prof-link-title">Отслеживание по словам</div>
+          <div class="prof-link-desc">Push-уведомления о новых скидках по вашим словам</div>
+        </div>
+        <span class="prof-link-arrow">›</span>
+      </div>
+
+      <div class="prof-invite">
+        <div class="prof-invite-icon">🎁</div>
+        <div class="prof-invite-body">
+          <div class="prof-invite-title">Пригласи друга</div>
+          <div class="prof-invite-desc">Получите 7 дней PRO бесплатно вдвоём</div>
+        </div>
+        <span class="prof-invite-arrow">›</span>
+      </div>
+
+      <div class="prof-section">УВЕДОМЛЕНИЯ</div>
+      <div class="prof-toggles-card">
+        <div class="prof-toggle-row">
+          <span class="prof-toggle-icon">⚡</span>
+          <span class="prof-toggle-label">Горящие скидки</span>
+          <label class="prof-toggle"><input type="checkbox" checked><span class="prof-toggle-track"></span></label>
+        </div>
+        <div class="prof-toggle-row">
+          <span class="prof-toggle-icon">📉</span>
+          <span class="prof-toggle-label">Снижение цены в списке</span>
+          <label class="prof-toggle"><input type="checkbox" checked><span class="prof-toggle-track"></span></label>
+        </div>
+      </div>
+
+      <div class="prof-section">ИНТЕРЕСЫ <span style="float:right;font-weight:400;text-transform:none;letter-spacing:0;color:var(--text2)">Выберите что вам интересно</span></div>
+      <div class="prof-toggles-card">
+        <div class="prof-toggle-row">
+          <span class="prof-toggle-icon">🎮</span>
+          <span class="prof-toggle-label">Игры</span>
+          <label class="prof-toggle"><input type="checkbox" checked><span class="prof-toggle-track"></span></label>
+        </div>
+        <div class="prof-toggle-row">
+          <span class="prof-toggle-icon">👕</span>
+          <span class="prof-toggle-label">Одежда</span>
+          <label class="prof-toggle"><input type="checkbox" checked><span class="prof-toggle-track"></span></label>
+        </div>
+        <div class="prof-toggle-row">
+          <span class="prof-toggle-icon">🏬</span>
+          <span class="prof-toggle-label">Маркетплейсы</span>
+          <label class="prof-toggle"><input type="checkbox" checked><span class="prof-toggle-track"></span></label>
+        </div>
+        <div class="prof-toggle-row">
+          <span class="prof-toggle-icon">✈️</span>
+          <span class="prof-toggle-label">Путешествия</span>
+          <label class="prof-toggle"><input type="checkbox" checked><span class="prof-toggle-track"></span></label>
+        </div>
+        <div class="prof-toggle-row">
+          <span class="prof-toggle-icon">📱</span>
+          <span class="prof-toggle-label">Электроника</span>
+          <label class="prof-toggle"><input type="checkbox" checked><span class="prof-toggle-track"></span></label>
+        </div>
+      </div>
+
+      <div class="prof-section">ПРОЧЕЕ</div>
+      <div class="prof-toggles-card">
+        <div class="prof-toggle-row" style="cursor:pointer" onclick="window.open('https://dealhunterapp.online','_blank')">
+          <span class="prof-toggle-icon">📱</span>
+          <span class="prof-toggle-label">Скачать приложение</span>
+          <span style="color:var(--muted);font-size:18px">›</span>
+        </div>
+        <div class="prof-toggle-row" style="cursor:pointer">
+          <span class="prof-toggle-icon">⭐</span>
+          <span class="prof-toggle-label">Оценить приложение</span>
+          <span style="color:var(--muted);font-size:18px">›</span>
+        </div>
+        <div class="prof-toggle-row" style="cursor:pointer">
+          <span class="prof-toggle-icon">💬</span>
+          <span class="prof-toggle-label">Обратная связь</span>
+          <span style="color:var(--muted);font-size:18px">›</span>
+        </div>
+      </div>
+
+      <div class="prof-footer">
         <p>DealHunter v1.0</p>
         <p style="margin-top:4px"><a href="https://dealhunterapp.online">dealhunterapp.online</a></p>
       </div>
