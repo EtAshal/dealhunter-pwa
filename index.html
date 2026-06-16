@@ -319,8 +319,8 @@ button{font-family:inherit}
         </div>
       </div>
       <div class="header-btns">
-        <div class="header-btn" title="История"><svg width="20" height="20" viewBox="0 0 512 512" fill="none" stroke="currentColor" stroke-width="32" stroke-linecap="round" stroke-linejoin="round"><path d="M256 64C150 64 64 150 64 256s86 192 192 192 192-86 192-192S362 64 256 64z"/><polyline points="256 128 256 272 352 320"/></svg></div>
-        <div class="header-btn" title="Уведомления"><svg width="20" height="20" viewBox="0 0 512 512" fill="currentColor"><path d="M440.08 341.31c-1.66-2-3.29-4-4.89-5.93-22-26.61-35.31-42.67-35.31-118 0-39-9.33-71-27.72-95-13.56-17.73-31.89-31.18-56.05-41.12a3.42 3.42 0 01-.19-.14C305.67 40.08 282.87 16 256 16s-49.67 24.08-60 65.12c-.06.05-.12.09-.19.14-24.16 9.94-42.49 23.39-56 41.12C121.21 146.38 112 178.38 112 217.38c0 75.38-13.27 91.44-35.31 118-1.6 1.93-3.23 3.89-4.89 5.93a35.16 35.16 0 00-4.65 37.62C73.71 392.44 88.33 400 104 400h304c15.67 0 30.29-7.56 36.85-21.07a35.16 35.16 0 00-4.77-37.62zM256 480a80.06 80.06 0 0070.44-42H185.56A80.06 80.06 0 00256 480z"/></svg></div>
+        <div class="header-btn" title="История" onclick="showHistoryModal()"><svg width="20" height="20" viewBox="0 0 512 512" fill="none" stroke="currentColor" stroke-width="32" stroke-linecap="round" stroke-linejoin="round"><path d="M256 64C150 64 64 150 64 256s86 192 192 192 192-86 192-192S362 64 256 64z"/><polyline points="256 128 256 272 352 320"/></svg></div>
+        <div class="header-btn" title="Уведомления" onclick="showNotificationsModal()"><svg width="20" height="20" viewBox="0 0 512 512" fill="currentColor"><path d="M440.08 341.31c-1.66-2-3.29-4-4.89-5.93-22-26.61-35.31-42.67-35.31-118 0-39-9.33-71-27.72-95-13.56-17.73-31.89-31.18-56.05-41.12a3.42 3.42 0 01-.19-.14C305.67 40.08 282.87 16 256 16s-49.67 24.08-60 65.12c-.06.05-.12.09-.19.14-24.16 9.94-42.49 23.39-56 41.12C121.21 146.38 112 178.38 112 217.38c0 75.38-13.27 91.44-35.31 118-1.6 1.93-3.23 3.89-4.89 5.93a35.16 35.16 0 00-4.65 37.62C73.71 392.44 88.33 400 104 400h304c15.67 0 30.29-7.56 36.85-21.07a35.16 35.16 0 00-4.77-37.62zM256 480a80.06 80.06 0 0070.44-42H185.56A80.06 80.06 0 00256 480z"/></svg></div>
       </div>
     </div>
 
@@ -383,11 +383,11 @@ button{font-family:inherit}
         </div>
       </div>
 
-      <div class="prof-link" onclick="alert('Авторизация будет доступна в следующем обновлении')">
+      <div class="prof-link" id="profAccountLink" onclick="showAccountModal()">
         <div class="prof-link-icon">👤</div>
         <div class="prof-link-body">
-          <div class="prof-link-title">Войти в аккаунт</div>
-          <div class="prof-link-desc">Сохрани список и получай уведомления</div>
+          <div class="prof-link-title" id="profAccountTitle">Войти в аккаунт</div>
+          <div class="prof-link-desc" id="profAccountDesc">Сохрани список и получай уведомления</div>
         </div>
         <span class="prof-link-arrow">›</span>
       </div>
@@ -782,10 +782,39 @@ function startFeedRotation(){
   },6000);
 }
 
+// ── View History ──
+function getViewHistory(){try{return JSON.parse(localStorage.getItem('dh_history')||'[]')}catch{return []}}
+function addToHistory(id){
+  let h=getViewHistory().filter(x=>x!==id);
+  h.unshift(id);
+  if(h.length>30) h=h.slice(0,30);
+  localStorage.setItem('dh_history',JSON.stringify(h));
+}
+
+// ── Interest-based filtering ──
+const INTEREST_CAT_MAP={games:'games',clothes:'clothes',market:'market',travel:'travel',electronics:'tech'};
+function getEnabledCategories(){
+  const p=getProfile();
+  const enabled=[];
+  for(const[key,catId] of Object.entries(INTEREST_CAT_MAP)){
+    if(p.interests[key]!==false) enabled.push(catId);
+  }
+  return enabled;
+}
+function filterByInterests(deals){
+  const enabled=getEnabledCategories();
+  if(enabled.length===Object.keys(INTEREST_CAT_MAP).length) return deals;
+  return deals.filter(d=>{
+    if(!d.category_id) return true;
+    if(MARKETPLACE_IDS.includes(d.store_id)&&enabled.includes('market')) return true;
+    return enabled.includes(d.category_id);
+  });
+}
+
 // ── Render Home ──
 function renderHome(){
   const content=document.getElementById('content');
-  const deals=allDeals;
+  const deals=filterByInterests(allDeals);
 
   if(!deals.length){
     content.innerHTML='<div class="loading"><div class="spinner"></div></div>';
@@ -805,6 +834,13 @@ function renderHome(){
 
   // Home: all sections
   let html='';
+
+  // Recently viewed
+  const histIds=getViewHistory();
+  const histDeals=histIds.map(id=>deals.find(d=>d.id===id)).filter(Boolean).slice(0,10);
+  if(histDeals.length){
+    html+=`<div class="section"><div class="section-header"><div class="section-title-row"><span class="section-title">🕐 Недавно просмотренные</span></div><span class="see-all" onclick="showHistoryModal()">Все →</span></div><div class="scroll-row">${histDeals.map(d=>cardHTML(d)).join('')}</div></div>`;
+  }
 
   // Deal of the Day
   html+=dealOfTheDayHTML(deals);
@@ -1012,7 +1048,7 @@ function updateProfileUI(){
   const av=document.querySelector('.prof-avatar');
   if(av) av.textContent=rank.emoji;
   const nm=document.querySelector('.prof-name');
-  if(nm) nm.textContent=rank.name;
+  if(nm) nm.textContent=p.userName||rank.name;
   const rk=document.querySelector('.prof-rank');
   if(rk) rk.textContent=`Уровень ${RANKS.indexOf(rank)+1} • ${p.xp} XP`;
   const ach=el('profAchievements');
@@ -1024,6 +1060,13 @@ function updateProfileUI(){
   if(streak) streak.textContent=p.streak;
   const saved=el('profSaved');
   if(saved) saved.textContent=calcSaved().toLocaleString('ru');
+  // account link
+  const accTitle=el('profAccountTitle');
+  const accDesc=el('profAccountDesc');
+  if(accTitle){
+    if(p.userName){accTitle.textContent=p.userName;accDesc.textContent=p.email||'Нажмите чтобы изменить';}
+    else{accTitle.textContent='Войти в аккаунт';accDesc.textContent='Сохрани список и получай уведомления';}
+  }
   // toggles
   document.querySelectorAll('[data-notif]').forEach(inp=>{inp.checked=p.notif[inp.dataset.notif]!==false;});
   document.querySelectorAll('[data-interest]').forEach(inp=>{inp.checked=p.interests[inp.dataset.interest]!==false;});
@@ -1034,7 +1077,7 @@ function initProfileToggles(){
     inp.addEventListener('change',()=>{const p=getProfile();p.notif[inp.dataset.notif]=inp.checked;saveProfile(p);});
   });
   document.querySelectorAll('[data-interest]').forEach(inp=>{
-    inp.addEventListener('change',()=>{const p=getProfile();p.interests[inp.dataset.interest]=inp.checked;saveProfile(p);checkAchievements();});
+    inp.addEventListener('change',()=>{const p=getProfile();p.interests[inp.dataset.interest]=inp.checked;saveProfile(p);checkAchievements();renderHome();});
   });
 }
 
@@ -1114,10 +1157,154 @@ function showAchievementsModal(){
 }
 
 function inviteFriend(){
-  const text='Попробуй DealHunter — лучшие скидки в одном месте! 🔥';
+  const p=getProfile();
+  const code=(p.userName||'HUNTER').toUpperCase().slice(0,6)+Math.floor(Math.random()*900+100);
+  const overlay=document.getElementById('detailOverlay');
+  const modal=document.getElementById('detailModal');
+  modal.innerHTML=`
+    <div class="detail-img-wrap" style="background:linear-gradient(135deg,#7C3AED,#4F46E5);padding:30px 20px;padding-top:max(30px,env(safe-area-inset-top));text-align:center">
+      <div class="detail-back-btn" onclick="closeDeal()"><svg width="20" height="20" viewBox="0 0 512 512" fill="none" stroke="currentColor" stroke-width="48" stroke-linecap="round" stroke-linejoin="round"><polyline points="328 112 184 256 328 400"/></svg></div>
+      <div style="font-size:56px;margin:10px 0">🎁</div>
+      <div style="font-size:22px;font-weight:900;color:#fff">Пригласи друга</div>
+      <div style="font-size:14px;color:rgba(255,255,255,0.7);margin-top:6px">Получите 7 дней PRO бесплатно вдвоём</div>
+    </div>
+    <div class="detail-body" style="padding-top:20px">
+      <div style="background:var(--card);border-radius:var(--r-lg);padding:20px;border:1px solid var(--border);text-align:center;margin-bottom:16px">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:8px">Ваш код приглашения</div>
+        <div style="font-size:28px;font-weight:900;color:var(--accent);letter-spacing:3px;margin-bottom:12px">${code}</div>
+        <button onclick="navigator.clipboard.writeText('${code}').then(()=>this.textContent='Скопировано ✓')" style="background:var(--accentGlow);color:var(--accent);border:1px solid var(--accent);border-radius:var(--r-md);padding:10px 20px;font-size:14px;font-weight:700;cursor:pointer;width:100%">Скопировать код</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px">
+        <div style="display:flex;align-items:center;gap:12px"><div style="width:36px;height:36px;border-radius:18px;background:var(--accentGlow);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">1️⃣</div><div style="font-size:13px;color:var(--text2)">Отправьте код другу</div></div>
+        <div style="display:flex;align-items:center;gap:12px"><div style="width:36px;height:36px;border-radius:18px;background:var(--accentGlow);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">2️⃣</div><div style="font-size:13px;color:var(--text2)">Друг вводит код при регистрации</div></div>
+        <div style="display:flex;align-items:center;gap:12px"><div style="width:36px;height:36px;border-radius:18px;background:var(--accentGlow);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">3️⃣</div><div style="font-size:13px;color:var(--text2)">Оба получаете 7 дней PRO</div></div>
+      </div>
+      <button onclick="shareInvite()" style="background:var(--accent);color:#fff;border:none;border-radius:var(--r-md);padding:14px;font-size:15px;font-weight:700;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:8px"><svg width="18" height="18" viewBox="0 0 512 512" fill="none" stroke="currentColor" stroke-width="36" stroke-linecap="round" stroke-linejoin="round"><path d="M336 192h40a40 40 0 0140 40v192a40 40 0 01-40 40H136a40 40 0 01-40-40V232a40 40 0 0140-40h40"/><polyline points="256 48 336 128 176 128 256 48"/><line x1="256" y1="48" x2="256" y2="320"/></svg> Поделиться</button>
+    </div>`;
+  overlay.classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function shareInvite(){
+  const text='Попробуй DealHunter — лучшие скидки в одном месте! 🔥 Установи и получи 7 дней PRO бесплатно!';
   const url='https://pwa.dealhunterapp.online';
   if(navigator.share){navigator.share({title:'DealHunter',text,url}).then(()=>trackInvite()).catch(()=>{});}
   else{navigator.clipboard.writeText(text+' '+url).then(()=>{trackInvite();alert('Ссылка скопирована!');});}
+}
+
+// ── History Modal ──
+function showHistoryModal(){
+  const histIds=getViewHistory();
+  const histDeals=histIds.map(id=>allDeals.find(d=>d.id===id)).filter(Boolean);
+  const overlay=document.getElementById('detailOverlay');
+  const modal=document.getElementById('detailModal');
+  const items=histDeals.length
+    ? '<div class="grid-wrap" style="padding:0 16px 20px">'+histDeals.map(d=>cardHTML(d)).join('')+'</div>'
+    : '<div class="empty-state"><div class="empty-icon">🕐</div><p>Вы ещё не просматривали скидки</p></div>';
+  modal.innerHTML=`
+    <div style="position:sticky;top:0;z-index:10;background:var(--bg);padding:16px;padding-top:max(16px,env(safe-area-inset-top));display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border)">
+      <div class="detail-back-btn" style="position:static;background:var(--card);color:var(--text)" onclick="closeDeal()"><svg width="20" height="20" viewBox="0 0 512 512" fill="none" stroke="currentColor" stroke-width="48" stroke-linecap="round" stroke-linejoin="round"><polyline points="328 112 184 256 328 400"/></svg></div>
+      <div style="font-size:18px;font-weight:800;color:var(--text)">История просмотров</div>
+      ${histDeals.length?`<div style="margin-left:auto;font-size:13px;color:var(--deal);cursor:pointer" onclick="localStorage.removeItem('dh_history');showHistoryModal()">Очистить</div>`:''}
+    </div>
+    ${items}`;
+  overlay.classList.add('open');
+  document.body.style.overflow='hidden';
+}
+
+// ── Notifications Modal ──
+function showNotificationsModal(){
+  const p=getProfile();
+  const overlay=document.getElementById('detailOverlay');
+  const modal=document.getElementById('detailModal');
+  modal.innerHTML=`
+    <div style="position:sticky;top:0;z-index:10;background:var(--bg);padding:16px;padding-top:max(16px,env(safe-area-inset-top));display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border)">
+      <div class="detail-back-btn" style="position:static;background:var(--card);color:var(--text)" onclick="closeDeal()"><svg width="20" height="20" viewBox="0 0 512 512" fill="none" stroke="currentColor" stroke-width="48" stroke-linecap="round" stroke-linejoin="round"><polyline points="328 112 184 256 328 400"/></svg></div>
+      <div style="font-size:18px;font-weight:800;color:var(--text)">Уведомления</div>
+    </div>
+    <div style="padding:16px">
+      <div class="prof-toggles-card">
+        <div class="prof-toggle-row">
+          <span class="prof-toggle-icon">⚡</span>
+          <span class="prof-toggle-label">Горящие скидки</span>
+          <label class="prof-toggle"><input type="checkbox" ${p.notif.hot!==false?'checked':''} onchange="let q=getProfile();q.notif.hot=this.checked;saveProfile(q)"><span class="prof-toggle-track"></span></label>
+        </div>
+        <div class="prof-toggle-row">
+          <span class="prof-toggle-icon">📉</span>
+          <span class="prof-toggle-label">Снижение цены в списке</span>
+          <label class="prof-toggle"><input type="checkbox" ${p.notif.priceDrop!==false?'checked':''} onchange="let q=getProfile();q.notif.priceDrop=this.checked;saveProfile(q)"><span class="prof-toggle-track"></span></label>
+        </div>
+        <div class="prof-toggle-row">
+          <span class="prof-toggle-icon">🆕</span>
+          <span class="prof-toggle-label">Новые скидки</span>
+          <label class="prof-toggle"><input type="checkbox" ${p.notif.newDeals!==false?'checked':''} onchange="let q=getProfile();q.notif.newDeals=this.checked;saveProfile(q)"><span class="prof-toggle-track"></span></label>
+        </div>
+        <div class="prof-toggle-row">
+          <span class="prof-toggle-icon">🔑</span>
+          <span class="prof-toggle-label">Ключевые слова</span>
+          <label class="prof-toggle"><input type="checkbox" ${p.notif.keywords!==false?'checked':''} onchange="let q=getProfile();q.notif.keywords=this.checked;saveProfile(q)"><span class="prof-toggle-track"></span></label>
+        </div>
+      </div>
+      <div style="color:var(--muted);font-size:12px;line-height:18px;margin-top:12px;padding:0 4px">Уведомления приходят через браузер. Убедитесь, что разрешили уведомления для этого сайта в настройках.</div>
+    </div>`;
+  overlay.classList.add('open');
+  document.body.style.overflow='hidden';
+}
+
+// ── Account Modal ──
+function showAccountModal(){
+  const p=getProfile();
+  const rank=getRank(p.xp);
+  const overlay=document.getElementById('detailOverlay');
+  const modal=document.getElementById('detailModal');
+  modal.innerHTML=`
+    <div class="detail-img-wrap" style="background:var(--card);padding:30px 20px;padding-top:max(30px,env(safe-area-inset-top));text-align:center">
+      <div class="detail-back-btn" onclick="closeDeal()"><svg width="20" height="20" viewBox="0 0 512 512" fill="none" stroke="currentColor" stroke-width="48" stroke-linecap="round" stroke-linejoin="round"><polyline points="328 112 184 256 328 400"/></svg></div>
+      <div style="width:72px;height:72px;border-radius:36px;background:var(--accentGlow);border:3px solid var(--accent);display:flex;align-items:center;justify-content:center;font-size:36px;margin:10px auto">${rank.emoji}</div>
+      <div style="font-size:20px;font-weight:900;color:var(--text);margin-top:8px">${p.userName||'Охотник'}</div>
+      <div style="font-size:13px;color:var(--text2);margin-top:4px">${rank.emoji} ${rank.name} • Ур. ${RANKS.indexOf(rank)+1}</div>
+    </div>
+    <div class="detail-body" style="padding-top:16px">
+      <div style="margin-bottom:16px">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Имя</div>
+        <input id="accName" type="text" value="${p.userName||''}" placeholder="Введите имя..." style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;color:var(--text);font-size:15px;outline:none">
+      </div>
+      <div style="margin-bottom:20px">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Email</div>
+        <input id="accEmail" type="email" value="${p.email||''}" placeholder="mail@example.com" style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;color:var(--text);font-size:15px;outline:none">
+      </div>
+      <button onclick="saveAccount()" style="background:var(--accent);color:#fff;border:none;border-radius:var(--r-md);padding:14px;font-size:15px;font-weight:700;cursor:pointer;width:100%;margin-bottom:16px">Сохранить</button>
+      <div class="prof-toggles-card">
+        <div class="prof-toggle-row" style="cursor:pointer" onclick="showAchievementsModal()">
+          <span class="prof-toggle-icon">🏆</span>
+          <span class="prof-toggle-label">Достижения (${p.unlocked.length}/${ACHIEVEMENTS.length})</span>
+          <span style="color:var(--muted);font-size:18px">›</span>
+        </div>
+        <div class="prof-toggle-row">
+          <span class="prof-toggle-icon">🔥</span>
+          <span class="prof-toggle-label">Стрик: ${p.streak} дн</span>
+          <span style="color:var(--accent);font-size:13px;font-weight:700">${p.xp} XP</span>
+        </div>
+        <div class="prof-toggle-row">
+          <span class="prof-toggle-icon">💰</span>
+          <span class="prof-toggle-label">Сэкономлено</span>
+          <span style="color:#4ADE80;font-size:13px;font-weight:700">${calcSaved().toLocaleString('ru')} ₽</span>
+        </div>
+      </div>
+      ${p.userName?`<div style="text-align:center;margin-top:16px"><span style="color:var(--deal);font-size:13px;cursor:pointer" onclick="if(confirm('Выйти из аккаунта?')){let q=getProfile();delete q.userName;delete q.email;saveProfile(q);updateProfileUI();closeDeal()}">Выйти из аккаунта</span></div>`:''}
+    </div>`;
+  overlay.classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function saveAccount(){
+  const p=getProfile();
+  const name=document.getElementById('accName').value.trim();
+  const email=document.getElementById('accEmail').value.trim();
+  if(name) p.userName=name;
+  if(email) p.email=email;
+  saveProfile(p);
+  updateProfileUI();
+  showXPToast(0,'Профиль сохранён');
+  closeDeal();
 }
 
 function renderWishlist(){
@@ -1195,6 +1382,7 @@ function openDeal(id){
   const d=allDeals.find(x=>x.id===id);
   if(!d) return;
   trackView();
+  addToHistory(id);
   const store=getStore(d.store_id);
   const tl=timeLeft(d.ends_at);
   const w=isInWishlist(id);
