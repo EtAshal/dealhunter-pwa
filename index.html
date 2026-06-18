@@ -865,6 +865,28 @@ function promoCodesHTML(){
   </a>`).join('')}</div></div>`;
 }
 
+// ── Travel Partners ──
+const TRAVEL_PARTNERS=[
+  {id:'sutochno',title:'Суточно.ру',desc:'Квартиры посуточно по всей России без комиссии',bg:'linear-gradient(135deg,#1a1a2e,#3d1a0a)',textColor:'#FF5722',badge:'Жильё',badgeColor:'#FF5722',logo:'🏡',url:'https://sutochno.tpx.lu/rOAzuijY'},
+  {id:'tutu',title:'Tutu.ru',desc:'Билеты на поезда, автобусы и самолёты по лучшим ценам',bg:'linear-gradient(135deg,#1a1a2e,#0a2e1a)',textColor:'#00A651',badge:'Билеты',badgeColor:'#00A651',logo:'🚂',url:'https://tutu.tpx.lu/KnMKHlGE'},
+  {id:'yandextravel',title:'Яндекс Путешествия',desc:'Отели, авиабилеты и ж/д билеты с кэшбэком баллами',bg:'linear-gradient(135deg,#1a1a2e,#2e1a0a)',textColor:'#FC3F1D',badge:'Отели',badgeColor:'#FC3F1D',logo:'🟡',url:'https://yandex.tpx.lu/AiPZCWZf'},
+  {id:'avitotravel',title:'Avito Travel',desc:'Аренда жилья от собственников — квартиры, дома, коттеджи',bg:'linear-gradient(135deg,#1a1a2e,#0a1e2e)',textColor:'#00AAFF',badge:'Аренда',badgeColor:'#00AAFF',logo:'🏠',url:'https://avito.tpx.lu/mIt3Do4k'}
+];
+
+function travelPartnersHTML(){
+  return `<div class="section"><div class="section-header"><div class="section-title-row"><span class="section-title">✈️ Путешествия</span></div></div><div class="scroll-row">${TRAVEL_PARTNERS.map(p=>`<a class="promo-card" href="${p.url}" target="_blank" rel="noopener" onclick="addXP(3,'Партнёр')">
+    <div class="promo-card-banner" style="background:${p.bg}">
+      <span class="promo-card-banner-text" style="color:${p.textColor}">${p.logo} ${p.title}</span>
+      <span class="promo-card-badge" style="background:${p.badgeColor}30;color:${p.textColor}">${p.badge}</span>
+    </div>
+    <div class="promo-card-body">
+      <div class="promo-card-title">${p.title}</div>
+      <div class="promo-card-desc">${p.desc}</div>
+      <div class="promo-card-cta">Перейти →</div>
+    </div>
+  </a>`).join('')}</div></div>`;
+}
+
 // ── LiveFeed ──
 function liveFeedHTML(){
   if(!feedEvents.length) return '';
@@ -993,6 +1015,9 @@ function renderHome(){
 
   // Promo codes
   html+=promoCodesHTML();
+
+  // Travel partners
+  html+=travelPartnersHTML();
 
   // LiveFeed
   html+=liveFeedHTML();
