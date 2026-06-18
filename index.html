@@ -1975,7 +1975,8 @@ document.getElementById('installBtn').onclick=()=>{if(deferredPrompt){deferredPr
 
 // ── Service Worker + Push Notifications ──
 async function initPush(){
-  if(!('serviceWorker' in navigator)||!('PushManager' in window)) return;
+  if(!('serviceWorker' in navigator)){alert('Нет ServiceWorker');return;}
+  if(!('PushManager' in window)){alert('Нет PushManager');return;}
   try{
     const reg=await navigator.serviceWorker.ready;
     const VAPID='BEPx-mACd-Ur-fu65kB7wFh6r2Y8HYTcEPXvpe6xOq7AytaR7-zx8sT-9NbNseYOrX8YylM3cD9VvSOgBWpvOOw';
@@ -1998,9 +1999,9 @@ async function initPush(){
       headers:{'apikey':SK,'Authorization':'Bearer '+SK,'Content-Type':'application/json','Prefer':'return=minimal'},
       body:JSON.stringify({user_id:uid,token:subJson,platform:'web'})
     });
-    if(res.ok) showXPToast(0,'🔔 Уведомления включены');
-    else showXPToast(0,'Ошибка: '+res.status);
-  }catch(e){showXPToast(0,'Push: '+e.message);}
+    if(res.ok) alert('✅ Push сохранён! Сейчас пришлём тест.');
+    else{const t=await res.text();alert('Ошибка сохранения: '+res.status+' '+t);}
+  }catch(e){alert('Push ошибка: '+e.message);}
 }
 function showPushPrompt(reg){
   const el = document.createElement('div');
