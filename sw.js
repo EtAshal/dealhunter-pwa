@@ -1,4 +1,4 @@
-const CACHE = 'dh-v3';
+const CACHE = 'dh-v4';
 
 self.addEventListener('install', e => {
   self.skipWaiting();
@@ -9,6 +9,30 @@ self.addEventListener('activate', e => {
     caches.keys().then(keys =>
       Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
     ).then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener('push', e => {
+  let data = {title: 'DealHunter', body: 'Новые скидки ждут вас!', icon: '/icons/icon-192.png'};
+  try { data = {...data, ...e.data.json()}; } catch {}
+  e.waitUntil(
+    self.registration.showNotification(data.title, {
+      body: data.body,
+      icon: data.icon || '/icons/icon-192.png',
+      badge: '/icons/icon-192.png',
+      data: data.url || '/',
+      vibrate: [100, 50, 100],
+    })
+  );
+});
+
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  e.waitUntil(
+    clients.matchAll({type: 'window'}).then(list => {
+      for (const c of list) { if (c.url.includes('dealhunterapp') && 'focus' in c) return c.focus(); }
+      return clients.openWindow(e.notification.data || '/');
+    })
   );
 });
 
