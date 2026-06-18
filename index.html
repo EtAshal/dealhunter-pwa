@@ -2042,24 +2042,28 @@ function showPushPrompt(reg){
       const perm = await Notification.requestPermission();
       if(perm==='granted'){
         const pushSub = await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlBase64ToUint8Array('BEPx-mACd-Ur-fu65kB7wFh6r2Y8HYTcEPXvpe6xOq7AytaR7-zx8sT-9NbNseYOrX8YylM3cD9VvSOgBWpvOOw')});
-        await savePushSub(pushSub);
-        showXPToast(0,'Уведомления включены!');
+        const ok = await savePushSub(pushSub);
+        if(ok) showXPToast(0,'Уведомления включены!');
+      } else {
+        alert('Разрешение: '+perm);
       }
-    }catch(e){console.warn('Push sub failed',e);}
+    }catch(e){alert('Push ошибка: '+e.message);}
     el.remove();
   };
 }
 async function savePushSub(pushSub){
   const subJson=JSON.stringify(pushSub.toJSON());
-  const uid=authUser?.id||crypto.randomUUID();
+  const uid=authUser?.id||'00000000-0000-4000-a000-'+(Date.now().toString(16).padStart(12,'0'));
   const SK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVsdGl5c2thZGJrcmRlbnp4eXltIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MTE5NzkyNSwiZXhwIjoyMDk2NzczOTI1fQ.iDCWNP1HiDOsrio8U_gryohJsrxBKduHXQnIqzkeXYE';
   try{
-    await fetch(SB_URL+'/rest/v1/push_tokens',{
+    const res=await fetch(SB_URL+'/rest/v1/push_tokens',{
       method:'POST',
-      headers:{'apikey':SK,'Authorization':'Bearer '+SK,'Content-Type':'application/json'},
+      headers:{'apikey':SK,'Authorization':'Bearer '+SK,'Content-Type':'application/json','Prefer':'return=minimal'},
       body:JSON.stringify({user_id:uid,token:subJson,platform:'web'})
     });
-  }catch(e){console.warn('Save push sub failed',e);}
+    if(!res.ok){const t=await res.text();alert('Ошибка сохранения: '+res.status+' '+t);return false;}
+    return true;
+  }catch(e){alert('Сеть: '+e.message);return false;}
 }
 function urlBase64ToUint8Array(base64String){
   const padding='='.repeat((4-base64String.length%4)%4);
