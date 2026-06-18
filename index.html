@@ -1634,8 +1634,21 @@ function showNotificationsModal(){
           <label class="prof-toggle"><input type="checkbox" ${p.notif.keywords!==false?'checked':''} onchange="let q=getProfile();q.notif.keywords=this.checked;saveProfile(q)"><span class="prof-toggle-track"></span></label>
         </div>
       </div>
-      <div style="color:var(--muted);font-size:12px;line-height:18px;margin-top:12px;padding:0 4px">Уведомления приходят через браузер. Убедитесь, что разрешили уведомления для этого сайта в настройках.</div>
+      <div id="notifPushStatus" style="margin-top:12px"></div>
+      <div style="color:var(--muted);font-size:12px;line-height:18px;margin-top:12px;padding:0 4px">Уведомления приходят через браузер. Добавьте сайт на главный экран для работы push.</div>
     </div>`;
+  const statusEl=document.getElementById('notifPushStatus');
+  if('PushManager' in window){
+    navigator.serviceWorker.ready.then(async reg=>{
+      const sub=await reg.pushManager.getSubscription();
+      if(sub) statusEl.innerHTML='<div style="padding:12px;border-radius:12px;background:var(--card2);text-align:center;font-size:13px;color:#22c55e;font-weight:600">✅ Push-уведомления включены</div>';
+      else statusEl.innerHTML='<button onclick="localStorage.removeItem(\'dh_push_dismissed\');closeDeal();initPush()" style="width:100%;padding:12px;border-radius:12px;background:var(--accent);color:#fff;border:none;font-weight:700;font-size:14px;cursor:pointer">🔔 Включить push-уведомления</button>';
+    });
+  } else {
+    const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent);
+    const hint=isIOS?'Нажми Поделиться (⬆) → На экран «Домой»':'Нажми ⋮ → Добавить на главный экран';
+    statusEl.innerHTML='<div style="padding:12px;border-radius:12px;background:var(--card2);font-size:13px;color:var(--muted);line-height:18px">📲 Для push-уведомлений добавь приложение на главный экран:<br><b>'+hint+'</b></div>';
+  }
   overlay.classList.add('open');
   document.body.style.overflow='hidden';
 }
@@ -1974,11 +1987,19 @@ window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPro
 document.getElementById('installBtn').onclick=()=>{if(deferredPrompt){deferredPrompt.prompt();deferredPrompt.userChoice.then(()=>{document.getElementById('installBanner').classList.remove('show');deferredPrompt=null;})}};
 
 // ── Service Worker + Push Notifications ──
+function isStandalone(){
+  return window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+}
 async function initPush(){
-  if(!('serviceWorker' in navigator)){alert('Нет ServiceWorker');return;}
-  if(!('PushManager' in window)){alert('Нет PushManager');return;}
+  if(!('serviceWorker' in navigator)) return;
+  const reg = await navigator.serviceWorker.ready;
+  if(!('PushManager' in window)){
+    if(!isStandalone() && !localStorage.getItem('dh_install_dismissed')){
+      showInstallHint();
+    }
+    return;
+  }
   try{
-    const reg=await navigator.serviceWorker.ready;
     const VAPID='BEPx-mACd-Ur-fu65kB7wFh6r2Y8HYTcEPXvpe6xOq7AytaR7-zx8sT-9NbNseYOrX8YylM3cD9VvSOgBWpvOOw';
     let sub=await reg.pushManager.getSubscription();
     if(sub){
@@ -1986,22 +2007,26 @@ async function initPush(){
       const b64=key?btoa(String.fromCharCode(...new Uint8Array(key))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''):'';
       if(b64!==VAPID){await sub.unsubscribe();sub=null;}
     }
-    if(!sub){
-      if(Notification.permission==='default') await Notification.requestPermission();
-      if(Notification.permission!=='granted') return;
-      sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlBase64ToUint8Array(VAPID)});
+    if(sub){
+      await savePushSub(sub);
+    } else if(Notification.permission!=='denied' && !localStorage.getItem('dh_push_dismissed')){
+      showPushPrompt(reg);
     }
-    const subJson=JSON.stringify(sub.toJSON());
-    const SK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVsdGl5c2thZGJrcmRlbnp4eXltIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MTE5NzkyNSwiZXhwIjoyMDk2NzczOTI1fQ.iDCWNP1HiDOsrio8U_gryohJsrxBKduHXQnIqzkeXYE';
-    const uid=authUser?.id||'00000000-0000-4000-a000-'+(Date.now().toString(16).padStart(12,'0'));
-    const res=await fetch(SB_URL+'/rest/v1/push_tokens',{
-      method:'POST',
-      headers:{'apikey':SK,'Authorization':'Bearer '+SK,'Content-Type':'application/json','Prefer':'return=minimal'},
-      body:JSON.stringify({user_id:uid,token:subJson,platform:'web'})
-    });
-    if(res.ok) alert('✅ Push сохранён! Сейчас пришлём тест.');
-    else{const t=await res.text();alert('Ошибка сохранения: '+res.status+' '+t);}
-  }catch(e){alert('Push ошибка: '+e.message);}
+  }catch(e){console.warn('initPush error',e);}
+}
+function showInstallHint(){
+  const el=document.createElement('div');
+  el.style.cssText='position:fixed;bottom:80px;left:16px;right:16px;background:var(--card);border:1px solid var(--accent);border-radius:16px;padding:16px;z-index:998;animation:slideUp .3s ease;box-shadow:0 4px 24px rgba(0,0,0,.4)';
+  const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent);
+  const steps=isIOS
+    ?'Нажми <b>Поделиться</b> (⬆) → <b>На экран «Домой»</b>'
+    :'Нажми <b>⋮</b> → <b>Добавить на главный экран</b>';
+  el.innerHTML=`<div style="font-weight:800;color:var(--text);margin-bottom:4px">📲 Добавь на главный экран</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:12px">${steps}<br>Тогда будут работать push-уведомления о скидках!</div>
+    <div style="display:flex;gap:8px">
+    <button id="installOk" style="flex:1;padding:10px;border-radius:10px;background:var(--card2);color:var(--muted);border:1px solid var(--border);font-weight:600;font-size:14px;cursor:pointer">Понятно</button></div>`;
+  document.body.appendChild(el);
+  el.querySelector('#installOk').onclick=()=>{localStorage.setItem('dh_install_dismissed','1');el.style.animation='fadeOut .2s ease forwards';setTimeout(()=>el.remove(),200);};
 }
 function showPushPrompt(reg){
   const el = document.createElement('div');
@@ -2011,7 +2036,7 @@ function showPushPrompt(reg){
     <div style="display:flex;gap:8px"><button id="pushYes" style="flex:1;padding:10px;border-radius:10px;background:var(--accent);color:#fff;border:none;font-weight:700;font-size:14px;cursor:pointer">Включить</button>
     <button id="pushNo" style="flex:1;padding:10px;border-radius:10px;background:var(--card2);color:var(--muted);border:1px solid var(--border);font-weight:600;font-size:14px;cursor:pointer">Позже</button></div>`;
   document.body.appendChild(el);
-  el.querySelector('#pushNo').onclick=()=>{el.style.animation='fadeOut .2s ease forwards';setTimeout(()=>el.remove(),200);};
+  el.querySelector('#pushNo').onclick=()=>{localStorage.setItem('dh_push_dismissed','1');el.style.animation='fadeOut .2s ease forwards';setTimeout(()=>el.remove(),200);};
   el.querySelector('#pushYes').onclick=async()=>{
     try{
       const perm = await Notification.requestPermission();
