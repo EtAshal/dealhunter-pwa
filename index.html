@@ -2044,10 +2044,8 @@ function showPushPrompt(reg){
         const pushSub = await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlBase64ToUint8Array('BEPx-mACd-Ur-fu65kB7wFh6r2Y8HYTcEPXvpe6xOq7AytaR7-zx8sT-9NbNseYOrX8YylM3cD9VvSOgBWpvOOw')});
         const ok = await savePushSub(pushSub);
         if(ok) showXPToast(0,'Уведомления включены!');
-      } else {
-        alert('Разрешение: '+perm);
       }
-    }catch(e){alert('Push ошибка: '+e.message);}
+    }catch(e){console.warn('Push sub failed',e);}
     el.remove();
   };
 }
@@ -2058,12 +2056,12 @@ async function savePushSub(pushSub){
   try{
     const res=await fetch(SB_URL+'/rest/v1/push_tokens',{
       method:'POST',
-      headers:{'apikey':SK,'Authorization':'Bearer '+SK,'Content-Type':'application/json','Prefer':'return=minimal'},
+      headers:{'apikey':SK,'Authorization':'Bearer '+SK,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},
       body:JSON.stringify({user_id:uid,token:subJson,platform:'web'})
     });
-    if(!res.ok){const t=await res.text();alert('Ошибка сохранения: '+res.status+' '+t);return false;}
+    if(!res.ok) return false;
     return true;
-  }catch(e){alert('Сеть: '+e.message);return false;}
+  }catch(e){console.warn('Save push sub failed',e);return false;}
 }
 function urlBase64ToUint8Array(base64String){
   const padding='='.repeat((4-base64String.length%4)%4);
