@@ -431,13 +431,13 @@ button{font-family:inherit}
         <span class="prof-link-arrow">›</span>
       </div>
 
-      <div class="prof-pro" onclick="showProModal()" style="cursor:pointer">
+      <div class="prof-pro" onclick="showProModal()" style="cursor:pointer" id="profProBlock">
         <div class="prof-pro-head">
           <div>
-            <div class="prof-pro-title">DealHunter PRO</div>
-            <div class="prof-pro-sub">Охоться на скидки как профи</div>
+            <div class="prof-pro-title" id="profProTitle">DealHunter PRO</div>
+            <div class="prof-pro-sub" id="profProSub">Охоться на скидки как профи</div>
           </div>
-          <div class="prof-pro-price">249 ₽/мес</div>
+          <div class="prof-pro-price" id="profProPrice">249 ₽/мес</div>
         </div>
         <div class="prof-pro-features">
           <div class="prof-pro-feat"><span>⚡</span><span>Ранний доступ к скидкам на 2 часа раньше</span></div>
@@ -1029,6 +1029,7 @@ function isInWishlist(id){ return getWishlist().includes(id) }
 function toggleWishlist(id){
   let list=getWishlist();
   const adding=!list.includes(id);
+  if(adding&&!isPro()&&list.length>=FREE_WISH_LIMIT){showProModal();return}
   if(adding) list.push(id); else list=list.filter(x=>x!==id);
   saveWishlist(list);
   refreshHearts();
@@ -1086,9 +1087,14 @@ function getProfile(){
   try{return JSON.parse(localStorage.getItem('dh_profile')||'null')||defaultProfile()}catch{return defaultProfile()}
 }
 function defaultProfile(){
-  return {xp:0,views:0,wishes:0,shares:0,reports:0,streak:1,lastVisit:new Date().toDateString(),invited:0,keywords:[],notif:{hot:true,priceDrop:true},interests:{games:true,clothes:true,market:true,travel:true,electronics:true},nightOwl:false,unlocked:[]};
+  return {xp:0,views:0,wishes:0,shares:0,reports:0,streak:1,lastVisit:new Date().toDateString(),invited:0,keywords:[],notif:{hot:true,priceDrop:true},interests:{games:true,clothes:true,market:true,travel:true,electronics:true},nightOwl:false,unlocked:[],proUntil:null};
 }
 function saveProfile(p){localStorage.setItem('dh_profile',JSON.stringify(p))}
+function isPro(){const p=getProfile();if(!p.proUntil)return false;return new Date(p.proUntil)>new Date()}
+function activatePro(days){const p=getProfile();const until=new Date();until.setDate(until.getDate()+days);p.proUntil=until.toISOString();saveProfile(p)}
+const FREE_WISH_LIMIT=10;
+const FREE_KEYWORD_LIMIT=3;
+const FREE_HISTORY_DAYS=7;
 
 function addXP(amount,reason){
   const p=getProfile();
@@ -1230,6 +1236,28 @@ function updateProfileUI(){
       accTitle.textContent='Войти в аккаунт';accDesc.textContent='Сохрани список и получай уведомления';
     }
   }
+  // PRO block
+  const proTitle=el('profProTitle');
+  const proSub=el('profProSub');
+  const proPrice=el('profProPrice');
+  const proBlock=el('profProBlock');
+  if(proTitle&&proSub&&proPrice){
+    if(isPro()){
+      const until=new Date(p.proUntil);
+      const days=Math.max(0,Math.ceil((until-new Date())/(1000*60*60*24)));
+      proTitle.textContent='PRO активен 💎';
+      proSub.textContent=days>0?`Осталось ${days} ${days===1?'день':days<5?'дня':'дней'}`:'Истекает сегодня';
+      proPrice.textContent='✓';
+      proPrice.style.color='#06D6A0';
+      if(proBlock) proBlock.style.borderColor='var(--accent)';
+    } else {
+      proTitle.textContent='DealHunter PRO';
+      proSub.textContent='Охоться на скидки как профи';
+      proPrice.textContent='249 ₽/мес';
+      proPrice.style.color='';
+      if(proBlock) proBlock.style.borderColor='';
+    }
+  }
   // toggles
   document.querySelectorAll('[data-notif]').forEach(inp=>{inp.checked=p.notif[inp.dataset.notif]!==false;});
   document.querySelectorAll('[data-interest]').forEach(inp=>{inp.checked=p.interests[inp.dataset.interest]!==false;});
@@ -1256,6 +1284,7 @@ function addKeyword(word){
   if(!p.keywords) p.keywords=[];
   word=word.trim().toLowerCase();
   if(!word||p.keywords.includes(word)) return;
+  if(!isPro()&&p.keywords.length>=FREE_KEYWORD_LIMIT){showProModal();return}
   p.keywords.push(word);
   saveProfile(p);
   addXP(5,'Новое ключевое слово');
@@ -1326,7 +1355,7 @@ function showHunterProfile(){
       <div class="detail-back-btn" onclick="closeDeal()"><svg width="20" height="20" viewBox="0 0 512 512" fill="none" stroke="currentColor" stroke-width="48" stroke-linecap="round" stroke-linejoin="round"><polyline points="328 112 184 256 328 400"/></svg></div>
       <div style="text-align:center;font-size:40px;margin:20px 0 10px">${rank.emoji}</div>
       <div style="text-align:center;font-size:20px;font-weight:900;color:var(--accent)">Профиль охотника</div>
-      <div style="text-align:center;font-size:13px;color:var(--text2);margin-top:4px">Уровень ${lvl} • ${p.xp} XP</div>
+      <div style="text-align:center;font-size:13px;color:var(--text2);margin-top:4px">Уровень ${lvl} • ${p.xp} XP${isPro()?' • 💎 PRO':''}</div>
     </div>
     <div class="detail-body" style="padding-top:16px">
       <div style="background:var(--card);border-radius:var(--r-lg);padding:16px;border:2px solid var(--accent);margin-bottom:16px">
@@ -1473,9 +1502,12 @@ function redeemRefCode(){
   if(!code||code.length<3){alert('Введите код друга');return;}
   if(code===getRefCode()){alert('Нельзя использовать свой код');return;}
   const p=getProfile();
+  if(p.redeemedCode){alert('Вы уже активировали код друга');return;}
   p.redeemedCode=code;
   saveProfile(p);
+  activatePro(7);
   addXP(20,'Код друга активирован');
+  alert('🎉 Код активирован! Вам начислено 7 дней PRO бесплатно.');
   inviteFriend();
 }
 
@@ -1523,14 +1555,25 @@ function showProModal(){
           <div style="text-align:right"><div style="font-size:20px;font-weight:800;color:var(--text)">${plan.price}</div><div style="font-size:12px;color:var(--muted)">${plan.per}</div></div>
         </div>`).join('')}
       </div>
-      <button onclick="alert('Подписка PRO будет доступна после публикации в App Store и Google Play.\\n\\nА пока — все PRO-функции бесплатны! 🎁')" style="display:flex;align-items:center;justify-content:center;gap:10px;background:var(--accent);color:#fff;border:none;border-radius:var(--r-lg);padding:17px;font-size:17px;font-weight:800;cursor:pointer;width:100%;margin-bottom:12px">💎 Оформить PRO</button>
-      <div style="color:var(--muted);font-size:11px;text-align:center;line-height:16px;padding:0 16px">Подписка продлевается автоматически. Отменить можно в любой момент в настройках App Store / Google Play.</div>
+      ${isPro()?`<div style="background:#06D6A022;border:2px solid #06D6A0;border-radius:var(--r-lg);padding:17px;text-align:center;margin-bottom:12px"><div style="font-size:17px;font-weight:800;color:#06D6A0">✓ PRO активен</div><div style="font-size:13px;color:var(--text2);margin-top:4px">Осталось ${Math.max(0,Math.ceil((new Date(getProfile().proUntil)-new Date())/(1000*60*60*24)))} дней</div></div>`:`<button onclick="handleProPurchase()" style="display:flex;align-items:center;justify-content:center;gap:10px;background:var(--accent);color:#fff;border:none;border-radius:var(--r-lg);padding:17px;font-size:17px;font-weight:800;cursor:pointer;width:100%;margin-bottom:12px">💎 Оформить PRO</button>`}
+      <div style="color:var(--muted);font-size:11px;text-align:center;line-height:16px;padding:0 16px">${isPro()?'Спасибо за поддержку! Все PRO-функции активны.':'Подписка продлевается автоматически. Отменить можно в любой момент в настройках App Store / Google Play.'}</div>
     </div>`;
   }
 
   renderProContent();
   overlay.classList.add('open');
   document.body.style.overflow='hidden';
+}
+
+function handleProPurchase(){
+  const plan=localStorage.getItem('dh_pro_plan')||'yearly';
+  const price=plan==='yearly'?'2 028 ₽/год (169 ₽/мес)':'249 ₽/мес';
+  if(confirm(`Оформить PRO за ${price}?\n\nОплата будет доступна после подключения платёжной системы. Сейчас вы можете активировать пробный период на 7 дней бесплатно.`)){
+    activatePro(7);
+    alert('🎉 PRO активирован на 7 дней!\n\nВам доступны:\n• Полная история цен за 90 дней\n• Безлимитный список желаний\n• Безлимитные ключевые слова\n• Без рекламы');
+    closeDeal();
+    updateProfileUI();
+  }
 }
 
 // ── History Modal ──
@@ -1756,12 +1799,14 @@ function analyzeDeal(d){
 
 function priceChartSVG(ph,currency){
   if(!ph||ph.length<2) return '';
+  if(!isPro()&&ph.length>3) ph=ph.slice(-3);
   const max=Math.max(...ph),min=Math.min(...ph),range=max-min||1;
   const W=280,H=60;
   const pts=ph.map((p,i)=>({x:(i/(ph.length-1))*W,y:H-((p-min)/range)*(H-10)-5}));
   let pathD='M'+pts.map(p=>`${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' L');
   let dots=pts.map((p,i)=>`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${i===pts.length-1?5:3.5}" fill="${i===pts.length-1?'var(--accent)':'var(--card)'}" stroke="var(--accent)" stroke-width="2"/>`).join('');
-  return `<div class="price-chart"><div class="price-chart-label">📈 История цены</div><svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg"><path d="${pathD}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>${dots}</svg><div class="price-chart-range"><span class="price-chart-min">Мин: ${min.toLocaleString('ru')} ${currency||'₽'}</span><span class="price-chart-max">Макс: ${max.toLocaleString('ru')} ${currency||'₽'}</span></div></div>`;
+  const proHint=!isPro()?'<div style="text-align:center;margin-top:8px;font-size:11px;color:var(--muted)">🔒 <span onclick="showProModal()" style="color:var(--accent);cursor:pointer;font-weight:600">PRO</span> — полный график за 90 дней</div>':'';
+  return `<div class="price-chart"><div class="price-chart-label">📈 История цены</div><svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg"><path d="${pathD}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>${dots}</svg><div class="price-chart-range"><span class="price-chart-min">Мин: ${min.toLocaleString('ru')} ${currency||'₽'}</span><span class="price-chart-max">Макс: ${max.toLocaleString('ru')} ${currency||'₽'}</span></div>${proHint}</div>`;
 }
 
 function verdictHTML(a,currency){
@@ -1877,12 +1922,22 @@ function shareDeal(id){
   const d=allDeals.find(x=>x.id===id);
   if(!d) return;
   trackShare();
-  const text=`${d.title} — ${d.is_free?'Бесплатно':d.price_current?d.price_current.toLocaleString('ru')+' '+(d.currency||'₽'):'Скидка'}${d.discount?' (-'+d.discount+'%)':''}`;
-  const url=d.url||location.href;
+  const store=getStore(d.store_id);
+  const priceText=d.is_free?'Бесплатно':d.price_current?d.price_current.toLocaleString('ru')+' '+(d.currency||'₽'):'';
+  const saving=d.price_old&&d.price_current?Math.round(d.price_old-d.price_current):0;
+  let lines=[];
+  lines.push(`🔥 ${d.title} — всего ${priceText}`);
+  if(d.price_old&&saving>0) lines.push(`Было ${d.price_old.toLocaleString('ru')} ${d.currency||'₽'} — экономия ${saving.toLocaleString('ru')} ${d.currency||'₽'}`);
+  if(d.is_free&&d.price_old) lines.push(`Было ${d.price_old.toLocaleString('ru')} ${d.currency||'₽'} — сейчас бесплатно!`);
+  lines.push(`${store.name}${d.discount?' • Скидка '+d.discount+'%':''}`);
+  lines.push('');
+  lines.push('Нашёл в DealHunter 📲');
+  const text=lines.join('\n');
+  const dealUrl=d.affiliate_url||d.url||'https://pwa.dealhunterapp.online';
   if(navigator.share){
-    navigator.share({title:'DealHunter',text,url}).catch(()=>{});
+    navigator.share({title:'DealHunter',text:text+'\n'+dealUrl}).catch(()=>{});
   } else {
-    navigator.clipboard.writeText(text+' '+url).then(()=>alert('Ссылка скопирована!')).catch(()=>{});
+    navigator.clipboard.writeText(text+'\n'+dealUrl).then(()=>alert('Ссылка скопирована!')).catch(()=>{});
   }
 }
 
