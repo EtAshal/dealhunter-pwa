@@ -1999,12 +1999,24 @@ function showPushPrompt(reg){
     try{
       const perm = await Notification.requestPermission();
       if(perm==='granted'){
-        await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlBase64ToUint8Array('BNn1LfFdXSYgJGv4Mc2vPJfl7JbSR0b9w3T6FpKCfGn5CjFfCZ7P9TpPXqX7r3YKJ3mkHZ6fQcXbVNqe0WRXZY0')});
+        const pushSub = await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlBase64ToUint8Array('BEPx-mACd-Ur-fu65kB7wFh6r2Y8HYTcEPXvpe6xOq7AytaR7-zx8sT-9NbNseYOrX8YylM3cD9VvSOgBWpvOOw')});
+        await savePushSub(pushSub);
         showXPToast(0,'Уведомления включены!');
       }
     }catch(e){console.warn('Push sub failed',e);}
     el.remove();
   };
+}
+async function savePushSub(pushSub){
+  const subJson=JSON.stringify(pushSub.toJSON());
+  const uid=authUser?.id||'anon_'+Math.random().toString(36).slice(2,10);
+  try{
+    await fetch(SB_URL+'/rest/v1/push_tokens',{
+      method:'POST',
+      headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},
+      body:JSON.stringify({user_id:uid,token:subJson,platform:'web'})
+    });
+  }catch(e){console.warn('Save push sub failed',e);}
 }
 function urlBase64ToUint8Array(base64String){
   const padding='='.repeat((4-base64String.length%4)%4);
