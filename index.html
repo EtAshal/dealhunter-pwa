@@ -1975,25 +1975,32 @@ document.getElementById('installBtn').onclick=()=>{if(deferredPrompt){deferredPr
 
 // ── Service Worker + Push Notifications ──
 async function initPush(){
-  if(!('serviceWorker' in navigator) || !('PushManager' in window)) return;
-  const reg = await navigator.serviceWorker.ready;
-  const VAPID='BEPx-mACd-Ur-fu65kB7wFh6r2Y8HYTcEPXvpe6xOq7AytaR7-zx8sT-9NbNseYOrX8YylM3cD9VvSOgBWpvOOw';
-  const oldSub = await reg.pushManager.getSubscription();
-  if(oldSub){
-    const key=oldSub.options?.applicationServerKey;
-    const b64=key?btoa(String.fromCharCode(...new Uint8Array(key))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''):'';
-    if(b64===VAPID){await savePushSub(oldSub);return;}
-    await oldSub.unsubscribe();
-  }
-  if(Notification.permission==='granted'){
-    try{const ns=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlBase64ToUint8Array(VAPID)});await savePushSub(ns);showXPToast(0,'Push подключён!');return;}catch(e){console.warn('Push re-sub failed',e);}
-  }
-  const p = getProfile();
-  if(!p.pushAsked){
-    p.pushAsked = true;
-    saveProfile(p);
-    setTimeout(()=>showPushPrompt(reg), 5000);
-  }
+  if(!('serviceWorker' in navigator)||!('PushManager' in window)) return;
+  try{
+    const reg=await navigator.serviceWorker.ready;
+    const VAPID='BEPx-mACd-Ur-fu65kB7wFh6r2Y8HYTcEPXvpe6xOq7AytaR7-zx8sT-9NbNseYOrX8YylM3cD9VvSOgBWpvOOw';
+    let sub=await reg.pushManager.getSubscription();
+    if(sub){
+      const key=sub.options?.applicationServerKey;
+      const b64=key?btoa(String.fromCharCode(...new Uint8Array(key))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''):'';
+      if(b64!==VAPID){await sub.unsubscribe();sub=null;}
+    }
+    if(!sub){
+      if(Notification.permission==='default') await Notification.requestPermission();
+      if(Notification.permission!=='granted') return;
+      sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlBase64ToUint8Array(VAPID)});
+    }
+    const subJson=JSON.stringify(sub.toJSON());
+    const SK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVsdGl5c2thZGJrcmRlbnp4eXltIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MTE5NzkyNSwiZXhwIjoyMDk2NzczOTI1fQ.iDCWNP1HiDOsrio8U_gryohJsrxBKduHXQnIqzkeXYE';
+    const uid=authUser?.id||'00000000-0000-4000-a000-'+(Date.now().toString(16).padStart(12,'0'));
+    const res=await fetch(SB_URL+'/rest/v1/push_tokens',{
+      method:'POST',
+      headers:{'apikey':SK,'Authorization':'Bearer '+SK,'Content-Type':'application/json','Prefer':'return=minimal'},
+      body:JSON.stringify({user_id:uid,token:subJson,platform:'web'})
+    });
+    if(res.ok) showXPToast(0,'🔔 Уведомления включены');
+    else showXPToast(0,'Ошибка: '+res.status);
+  }catch(e){showXPToast(0,'Push: '+e.message);}
 }
 function showPushPrompt(reg){
   const el = document.createElement('div');
