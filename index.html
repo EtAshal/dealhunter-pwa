@@ -2097,6 +2097,8 @@ function urlBase64ToUint8Array(base64String){
 }
 if(window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true){
   document.body.classList.add('is-pwa');
+  document.querySelector('.tab-bar').style.paddingBottom='0px';
+  document.querySelector('.tab-bar').style.bottom='-2px';
 }
 if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').then(()=>initPush());
 
