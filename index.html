@@ -1978,7 +1978,10 @@ async function initPush(){
   if(!('serviceWorker' in navigator) || !('PushManager' in window)) return;
   const reg = await navigator.serviceWorker.ready;
   const sub = await reg.pushManager.getSubscription();
-  if(sub) return;
+  if(sub){await savePushSub(sub);return;}
+  if(Notification.permission==='granted'){
+    try{const ns=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlBase64ToUint8Array('BEPx-mACd-Ur-fu65kB7wFh6r2Y8HYTcEPXvpe6xOq7AytaR7-zx8sT-9NbNseYOrX8YylM3cD9VvSOgBWpvOOw')});await savePushSub(ns);return;}catch{}
+  }
   const p = getProfile();
   if(!p.pushAsked){
     p.pushAsked = true;
@@ -2009,11 +2012,12 @@ function showPushPrompt(reg){
 }
 async function savePushSub(pushSub){
   const subJson=JSON.stringify(pushSub.toJSON());
-  const uid=authUser?.id||'anon_'+Math.random().toString(36).slice(2,10);
+  const uid=authUser?.id||crypto.randomUUID();
+  const SK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVsdGl5c2thZGJrcmRlbnp4eXltIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MTE5NzkyNSwiZXhwIjoyMDk2NzczOTI1fQ.iDCWNP1HiDOsrio8U_gryohJsrxBKduHXQnIqzkeXYE';
   try{
     await fetch(SB_URL+'/rest/v1/push_tokens',{
       method:'POST',
-      headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},
+      headers:{'apikey':SK,'Authorization':'Bearer '+SK,'Content-Type':'application/json'},
       body:JSON.stringify({user_id:uid,token:subJson,platform:'web'})
     });
   }catch(e){console.warn('Save push sub failed',e);}
