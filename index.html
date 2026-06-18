@@ -186,7 +186,7 @@ button{font-family:inherit}
 
 /* ── Bottom Tabs ── */
 .tab-bar{display:flex;background:#0A0D1A;padding:6px 0 env(safe-area-inset-bottom,8px);position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;z-index:100}
-@media all and (display-mode: standalone){.tab-bar{padding-bottom:2px}}
+body.is-pwa .tab-bar{padding-bottom:0}
 .tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;padding:4px 0;cursor:pointer;color:var(--muted);transition:.2s;-webkit-tap-highlight-color:transparent}
 .tab.active{color:var(--accent)}
 .tab-icon{font-size:20px;line-height:1}
@@ -2094,6 +2094,9 @@ function urlBase64ToUint8Array(base64String){
   const base64=(base64String+padding).replace(/-/g,'+').replace(/_/g,'/');
   const raw=atob(base64);
   return Uint8Array.from([...raw].map(c=>c.charCodeAt(0)));
+}
+if(window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true){
+  document.body.classList.add('is-pwa');
 }
 if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').then(()=>initPush());
 
