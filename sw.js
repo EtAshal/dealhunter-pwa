@@ -1,4 +1,4 @@
-const CACHE = 'dh-v6';
+const CACHE = 'dh-v7';
 
 self.addEventListener('install', e => {
   self.skipWaiting();
@@ -37,7 +37,9 @@ self.addEventListener('notificationclick', e => {
 });
 
 self.addEventListener('fetch', e => {
+  if (e.request.method !== 'GET') return;
   if (e.request.url.includes('data.json')) return;
+  if (e.request.url.includes('supabase.co')) return;
   const isNav = e.request.mode === 'navigate' || e.request.destination === 'document';
   if (isNav) {
     e.respondWith(
