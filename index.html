@@ -1329,12 +1329,14 @@ function addKeyword(word){
   addXP(5,'Новое ключевое слово');
   checkAchievements();
   renderKeywords();
+  syncKeywordsToServer();
 }
 function removeKeyword(word){
   const p=getProfile();
   p.keywords=(p.keywords||[]).filter(w=>w!==word);
   saveProfile(p);
   renderKeywords();
+  syncKeywordsToServer();
 }
 function renderKeywords(){
   const el=document.getElementById('keywordsList');
@@ -2096,6 +2098,19 @@ async function savePushSub(pushSub){
     if(!res.ok) return false;
     return true;
   }catch(e){console.warn('Save push sub failed',e);return false;}
+}
+async function syncKeywordsToServer(){
+  const p=getProfile();
+  const kw=p.keywords||[];
+  const SK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVsdGl5c2thZGJrcmRlbnp4eXltIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MTE5NzkyNSwiZXhwIjoyMDk2NzczOTI1fQ.iDCWNP1HiDOsrio8U_gryohJsrxBKduHXQnIqzkeXYE';
+  const uid=authUser?.id||'949bf2c2-cf66-4e5a-8b80-3259b65c1934';
+  try{
+    await fetch(SB_URL+'/rest/v1/push_tokens?user_id=eq.'+uid,{
+      method:'PATCH',
+      headers:{'apikey':SK,'Authorization':'Bearer '+SK,'Content-Type':'application/json'},
+      body:JSON.stringify({keywords:kw})
+    });
+  }catch(e){console.warn('syncKeywords failed',e);}
 }
 function urlBase64ToUint8Array(base64String){
   const padding='='.repeat((4-base64String.length%4)%4);
