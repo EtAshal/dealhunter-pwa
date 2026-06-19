@@ -443,6 +443,7 @@ button{font-family:inherit}
           <div class="prof-pro-feat"><span>⚡</span><span>Ранний доступ к скидкам на 2 часа раньше</span></div>
           <div class="prof-pro-feat"><span>📊</span><span>Полная история цен за 90 дней</span></div>
           <div class="prof-pro-feat"><span>🔔</span><span>Мгновенные push при падении цены</span></div>
+          <div class="prof-pro-feat"><span>🎯</span><span>Безлимитные пороги цен</span></div>
           <div class="prof-pro-feat"><span>❤️</span><span>Безлимитный список желаний</span></div>
           <div class="prof-pro-feat"><span>🔍</span><span>Безлимитные ключевые слова</span></div>
           <div class="prof-pro-feat"><span>🚫</span><span>Без рекламы</span></div>
@@ -454,6 +455,15 @@ button{font-family:inherit}
         <div class="prof-link-body">
           <div class="prof-link-title">Отслеживание по словам</div>
           <div class="prof-link-desc">Push-уведомления о новых скидках по вашим словам</div>
+        </div>
+        <span class="prof-link-arrow">›</span>
+      </div>
+
+      <div class="prof-link" onclick="showPriceAlertsScreen()">
+        <div class="prof-link-icon">🎯</div>
+        <div class="prof-link-body">
+          <div class="prof-link-title">Пороги цен</div>
+          <div class="prof-link-desc">Уведомим когда цена упадёт до нужной</div>
         </div>
         <span class="prof-link-arrow">›</span>
       </div>
@@ -1128,6 +1138,37 @@ async function syncProStatus(isPro){if(!authUser)return;try{await sb.from('user_
 const FREE_WISH_LIMIT=5;
 const FREE_KEYWORD_LIMIT=3;
 const FREE_HISTORY_DAYS=7;
+const FREE_ALERT_LIMIT=2;
+
+// ── Price Alerts (порог цены) ──
+function getPriceAlerts(){try{return JSON.parse(localStorage.getItem('dh_price_alerts')||'[]')}catch{return[]}}
+function savePriceAlerts(a){localStorage.setItem('dh_price_alerts',JSON.stringify(a))}
+function addPriceAlert(dealId,targetPrice){
+  let alerts=getPriceAlerts();
+  if(!isPro()&&alerts.length>=FREE_ALERT_LIMIT){showProModal();return false}
+  alerts=alerts.filter(a=>a.id!==dealId);
+  alerts.push({id:dealId,target:targetPrice,created:new Date().toISOString()});
+  savePriceAlerts(alerts);
+  return true;
+}
+function removePriceAlert(dealId){
+  savePriceAlerts(getPriceAlerts().filter(a=>a.id!==dealId));
+}
+function getPriceAlert(dealId){return getPriceAlerts().find(a=>a.id===dealId)||null}
+function checkExpiredAlerts(){
+  const now=Date.now();
+  const alerts=getPriceAlerts().filter(a=>{
+    const age=(now-new Date(a.created).getTime())/(1000*60*60);
+    if(age>72){return false}
+    const d=allDeals.find(x=>x.id===a.id);
+    if(d&&d.price_current<=a.target){
+      showXPToast(0,`🎯 ${d.title.slice(0,30)} — цена достигла порога!`);
+      return false;
+    }
+    return true;
+  });
+  savePriceAlerts(alerts);
+}
 
 function addXP(amount,reason){
   const p=getProfile();
@@ -1373,6 +1414,41 @@ function showKeywordsModal(){
   document.body.style.overflow='hidden';
 }
 
+function showPriceAlertsScreen(){
+  const alerts=getPriceAlerts();
+  const overlay=document.getElementById('detailOverlay');
+  const modal=document.getElementById('detailModal');
+  let listHTML='';
+  if(!alerts.length){
+    listHTML='<div style="text-align:center;padding:40px 20px"><div style="font-size:40px;margin-bottom:12px">🎯</div><div style="color:var(--text2);font-size:14px;line-height:20px">Пока нет активных порогов.<br>Откройте карточку товара и установите<br>желаемую цену — мы уведомим вас!</div></div>';
+  } else {
+    listHTML=alerts.map(a=>{
+      const d=allDeals.find(x=>x.id===a.id);
+      const remain=Math.max(0,72-((Date.now()-new Date(a.created).getTime())/(1000*60*60)));
+      const hrs=Math.floor(remain);
+      const store=d?getStore(d.store_id):{logo:'📦',name:'Магазин'};
+      const title=d?d.title:'Товар больше не доступен';
+      const curPrice=d?d.price_current.toLocaleString('ru')+' ₽':'—';
+      const reached=d&&d.price_current<=a.target;
+      return `<div style="background:var(--card);border-radius:var(--r-lg);padding:14px;margin-bottom:8px;border:1px solid ${reached?'#06D6A044':'var(--border)'}"><div style="display:flex;align-items:center;gap:12px"><div style="width:42px;height:42px;border-radius:10px;background:${(store.color||'#333')+'33'};display:flex;align-items:center;justify-content:center;font-size:20px">${store.logo}</div><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${title}</div><div style="display:flex;align-items:center;gap:8px;margin-top:4px"><span style="font-size:12px;color:var(--muted)">Сейчас: ${curPrice}</span><span style="font-size:12px;color:var(--accent);font-weight:700">→ ${a.target.toLocaleString('ru')} ₽</span></div><div style="font-size:11px;color:var(--muted);margin-top:2px">${reached?'<span style="color:#06D6A0;font-weight:700">✓ Цена достигнута!</span>':`⏳ Осталось ~${hrs}ч`}</div></div><div onclick="removePriceAlert('${a.id}');showPriceAlertsScreen()" style="width:32px;height:32px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;color:var(--muted)">✕</div></div></div>`;
+    }).join('');
+  }
+  modal.innerHTML=`
+    <div class="detail-img-wrap" style="background:var(--card);padding:20px;padding-top:max(20px,env(safe-area-inset-top))">
+      <div class="detail-back-btn" onclick="closeDeal()"><svg width="20" height="20" viewBox="0 0 512 512" fill="none" stroke="currentColor" stroke-width="48" stroke-linecap="round" stroke-linejoin="round"><polyline points="328 112 184 256 328 400"/></svg></div>
+      <div style="text-align:center;font-size:40px;margin:20px 0 10px">🎯</div>
+      <div style="text-align:center;font-size:18px;font-weight:800;color:var(--text)">Пороги цен</div>
+      <div style="text-align:center;font-size:13px;color:var(--text2);margin-top:4px">Установите желаемую цену — push придёт когда она упадёт</div>
+    </div>
+    <div class="detail-body" style="padding-top:16px">
+      <div style="background:var(--surface);border-radius:var(--r-md);padding:12px 14px;margin-bottom:16px;display:flex;align-items:center;gap:10px"><span style="font-size:16px">💡</span><div style="font-size:12px;color:var(--text2);line-height:16px">Откройте любой товар и нажмите «🎯 Следить» — вы установите цену, при которой получите уведомление. Порог действует <b>3 дня</b>.</div></div>
+      <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Активные пороги (${alerts.length}${!isPro()?' / '+FREE_ALERT_LIMIT:''})</div>
+      ${listHTML}
+    </div>`;
+  overlay.classList.add('open');
+  document.body.style.overflow='hidden';
+}
+
 function showHunterProfile(){
   const p=getProfile();
   const rank=getRank(p.xp);
@@ -1405,7 +1481,7 @@ function showHunterProfile(){
       <div style="background:var(--card);border-radius:var(--r-lg);padding:16px;border:2px solid var(--accent);margin-bottom:16px">
         <div style="display:flex;align-items:center;gap:12px">
           <div style="width:60px;height:60px;border-radius:30px;background:var(--accentGlow);display:flex;align-items:center;justify-content:center;font-size:32px;border:2px solid var(--accent)">${rank.emoji}</div>
-          <div style="flex:1"><div style="font-size:20px;font-weight:900;color:var(--accent)">${authProfile?.display_name||p.userName||rank.name}</div><div style="font-size:13px;color:var(--text2);margin-top:2px">Уровень ${lvl}</div></div>
+          <div style="flex:1"><div style="font-size:20px;font-weight:900;color:var(--accent)">${authProfile?.display_name||p.userName||rank.name} <span style="background:linear-gradient(135deg,#8B5CF6,#A78BFA);color:#fff;font-size:11px;font-weight:800;padding:2px 8px;border-radius:10px;vertical-align:middle;margin-left:4px">💎 PRO</span></div><div style="font-size:13px;color:var(--text2);margin-top:2px">Уровень ${lvl}</div></div>
           <div style="background:var(--accent);color:#fff;border-radius:20px;padding:6px 14px;font-size:14px;font-weight:800">${p.xp} XP</div>
         </div>
         <div style="height:4px;background:var(--border);border-radius:2px;margin-top:12px;overflow:hidden"><div style="height:100%;background:var(--accent);border-radius:2px;width:${pct}%"></div></div>
@@ -1563,7 +1639,8 @@ function showProModal(){
     {icon:'⚡',color:'#FFD700',title:'Ранний доступ',desc:'Скидки на 2 часа раньше всех'},
     {icon:'📊',color:'#8B5CF6',title:'История цен 90 дней',desc:'Полный график динамики цены'},
     {icon:'🔔',color:'#FB7185',title:'Мгновенные push',desc:'Уведомление в момент падения цены'},
-    {icon:'♾️',color:'#06D6A0',title:'Безлимит',desc:'Список желаний и ключевые слова без ограничений'},
+    {icon:'🎯',color:'#F97316',title:'Пороги цен',desc:'Уведомление когда цена упадёт до нужной'},
+    {icon:'♾️',color:'#06D6A0',title:'Безлимит',desc:'Вишлист, ключевые слова и пороги без ограничений'},
     {icon:'🚫',color:'#60A5FA',title:'Без рекламы',desc:'Чистый интерфейс без баннеров'},
     {icon:'🎖️',color:'#FBBF24',title:'Бейдж PRO',desc:'Статус в ленте «Покупают сейчас»'},
   ];
@@ -1828,15 +1905,23 @@ async function handleTgAuth(){
 function renderWishlist(){
   const body=document.querySelector('#wishlistScreen .screen-body');
   const list=getWishlist();
-  if(!list.length){
+  const alertIds=getPriceAlerts().map(a=>a.id);
+  const allIds=[...new Set([...list,...alertIds])];
+  if(!allIds.length){
     body.innerHTML='<div class="empty-state"><div class="empty-icon">💜</div><p>Нажмите ♡ на карточке скидки,<br>чтобы сохранить её сюда</p></div>';
     return;
   }
-  const found=allDeals.filter(d=>list.includes(d.id));
-  const expiredIds=list.filter(id=>!allDeals.find(d=>d.id===id));
+  const found=allDeals.filter(d=>allIds.includes(d.id));
+  const alertOnlyDeals=found.filter(d=>alertIds.includes(d.id)&&!list.includes(d.id));
+  const wishDeals=found.filter(d=>list.includes(d.id));
+  const expiredIds=list.filter(id=>!allDeals.find(d=>d.id===id)&&!alertIds.includes(id));
   const expiredHTML=expiredIds.map(id=>`<div style="background:var(--card);border-radius:var(--r-lg);padding:14px;display:flex;align-items:center;gap:12px;opacity:.6"><div style="width:48px;height:48px;border-radius:10px;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:20px">🕐</div><div style="flex:1;min-width:0"><div style="font-size:13px;color:var(--text2)">Скидка устарела</div><div style="font-size:11px;color:var(--muted);margin-top:2px">Товар больше не доступен</div></div><div onclick="event.stopPropagation();let l=getWishlist().filter(x=>x!=='${id}');saveWishlist(l);renderWishlist()" style="width:32px;height:32px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px">✕</div></div>`).join('');
-  const cardsHTML=found.map(d=>cardHTML(d)).join('');
-  body.innerHTML='<div class="grid-wrap" style="padding:0 16px 20px">'+cardsHTML+'</div>'+(expiredHTML?'<div style="padding:0 16px 20px;display:flex;flex-direction:column;gap:8px">'+expiredHTML+'</div>':'');
+  const wishHTML=wishDeals.map(d=>cardHTML(d)).join('');
+  let alertHTML='';
+  if(alertOnlyDeals.length){
+    alertHTML='<div style="padding:0 16px 8px"><div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">🎯 Отслеживаю цену</div></div><div class="grid-wrap" style="padding:0 16px 20px">'+alertOnlyDeals.map(d=>cardHTML(d)).join('')+'</div>';
+  }
+  body.innerHTML='<div class="grid-wrap" style="padding:0 16px 20px">'+wishHTML+'</div>'+alertHTML+(expiredHTML?'<div style="padding:0 16px 20px;display:flex;flex-direction:column;gap:8px">'+expiredHTML+'</div>':'');
 }
 
 // ── Price Analyzer ──
@@ -1900,6 +1985,18 @@ function priceCompHTML(deal){
   }).join('')}</div>`;
 }
 
+function priceAlertHTML(d){
+  if(!d.price_current||d.price_current<=0||d.is_free) return '';
+  const alert=getPriceAlert(d.id);
+  if(alert){
+    const remain=Math.max(0,72-((Date.now()-new Date(alert.created).getTime())/(1000*60*60)));
+    const hrs=Math.floor(remain);
+    return `<div style="background:#8B5CF622;border:1px solid #8B5CF644;border-radius:var(--r-lg);padding:14px;margin-bottom:12px"><div style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:18px">🎯</span><div><div style="font-size:13px;font-weight:700;color:var(--accent)">Порог: ${alert.target.toLocaleString('ru')} ₽</div><div style="font-size:11px;color:var(--muted);margin-top:2px">Осталось ~${hrs}ч отслеживания</div></div></div><div onclick="removePriceAlert('${d.id}');openDeal('${d.id}')" style="width:28px;height:28px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;color:var(--muted)">✕</div></div></div>`;
+  }
+  const suggest=Math.floor(d.price_current*0.85);
+  return `<div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px;margin-bottom:12px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="font-size:16px">🎯</span><div style="font-size:13px;font-weight:700;color:var(--text)">Уведомить при снижении цены</div></div><div style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:16px">Установите желаемую цену — мы отправим push, когда цена упадёт до неё. Действует 3 дня.</div><div style="display:flex;gap:8px"><input id="alertPriceInput" type="number" value="${suggest}" placeholder="Желаемая цена" style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 12px;color:var(--text);font-size:14px;outline:none;-moz-appearance:textfield" min="1"><button onclick="const v=parseInt(document.getElementById('alertPriceInput').value);if(v>0&&v<${d.price_current}){if(addPriceAlert('${d.id}',v))openDeal('${d.id}')}else{alert('Порог должен быть ниже текущей цены')}" style="background:var(--accent);color:#fff;border:none;border-radius:var(--r-md);padding:10px 16px;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap">🎯 Следить</button></div></div>`;
+}
+
 // ── Deal Detail ──
 function openDeal(id){
   const d=allDeals.find(x=>x.id===id);
@@ -1960,6 +2057,7 @@ function openDeal(id){
       ${verdictHTML(analyzeDeal(d),d.currency)}
       ${priceChartSVG(d.priceHistory,d.currency)}
       ${tagsHTML}
+      ${priceAlertHTML(d)}
       <div class="detail-actions">
         <button class="detail-btn detail-btn-wish${w?' wishlisted':''}" onclick="event.stopPropagation();toggleWishlist('${id}');openDeal('${id}')">${heartSVG(w)} В список</button>
         <button class="detail-btn detail-btn-share" onclick="shareDeal('${id}')"><svg width="18" height="18" viewBox="0 0 512 512" fill="none" stroke="currentColor" stroke-width="36" stroke-linecap="round" stroke-linejoin="round"><path d="M336 192h40a40 40 0 0140 40v192a40 40 0 01-40 40H136a40 40 0 01-40-40V232a40 40 0 0140-40h40"/><polyline points="256 48 336 128 176 128 256 48"/><line x1="256" y1="48" x2="256" y2="320"/></svg></button>
@@ -2145,6 +2243,7 @@ async function init(){
     renderHome();
     startFeedRotation();
     checkAchievements();
+    checkExpiredAlerts();
     const sharedDealId=new URLSearchParams(location.search).get('deal');
     if(sharedDealId){
       const found=allDeals.find(x=>x.id===sharedDealId);
