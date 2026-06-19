@@ -1205,19 +1205,28 @@ function calcSaved(){
   return allDeals.filter(d=>list.includes(d.id)&&d.price_old>0&&d.price_current>0&&d.price_old>d.price_current).reduce((s,d)=>s+(d.price_old-d.price_current),0);
 }
 
+function repairXP(){
+  if(localStorage.getItem('dh_xp_repaired'))return;
+  const p=getProfile();
+  if(p.unlocked.length&&p.xp===0){
+    let earned=0;
+    p.unlocked.forEach(id=>{earned+=achXP(id);});
+    if(earned>0){p.xp=earned;saveProfile(p);}
+  }
+  localStorage.setItem('dh_xp_repaired','1');
+}
 function checkAchievements(){
   const p=getProfile();
   const s={...p,saved:calcSaved(),allCats:Object.values(p.interests).every(v=>v),keywords:p.keywords.length};
   const newAchs=[];
   ACHIEVEMENTS.forEach(a=>{
-    if(!p.unlocked.includes(a.id)&&a.check(s)){p.unlocked.push(a.id);newAchs.push(a);}
+    if(!p.unlocked.includes(a.id)&&a.check(s)){p.unlocked.push(a.id);p.xp+=achXP(a.id);newAchs.push(a);}
   });
   if(newAchs.length){saveProfile(p);newAchs.forEach((a,i)=>setTimeout(()=>showAchievementPopup(a),i*1500));}
   updateProfileUI();
 }
 function showAchievementPopup(ach){
   const xp=achXP(ach.id);
-  addXP(xp,ach.name);
   const overlay=document.createElement('div');
   overlay.style.cssText='position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);backdrop-filter:blur(6px);animation:fadeIn .3s ease';
   overlay.innerHTML=`<div style="background:var(--card);border:2px solid var(--accent);border-radius:20px;padding:32px 28px;text-align:center;max-width:300px;animation:achPop .5s cubic-bezier(.17,.67,.29,1.4)">
@@ -2104,6 +2113,7 @@ setInterval(updateTimer,1000);
 
 // ── Init ──
 async function init(){
+  repairXP();
   renderCats();
   updateStreak();
   initProfileToggles();
