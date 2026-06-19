@@ -1149,10 +1149,12 @@ function addPriceAlert(dealId,targetPrice){
   alerts=alerts.filter(a=>a.id!==dealId);
   alerts.push({id:dealId,target:targetPrice,created:new Date().toISOString()});
   savePriceAlerts(alerts);
+  syncAlertsToServer();
   return true;
 }
 function removePriceAlert(dealId){
   savePriceAlerts(getPriceAlerts().filter(a=>a.id!==dealId));
+  syncAlertsToServer();
 }
 function getPriceAlert(dealId){return getPriceAlerts().find(a=>a.id===dealId)||null}
 function checkExpiredAlerts(){
@@ -1166,6 +1168,7 @@ function checkExpiredAlerts(){
     return true;
   });
   savePriceAlerts(alerts);
+  syncAlertsToServer();
   reached.forEach(({deal,target})=>{
     const store=getStore(deal.store_id);
     showXPToast(0,`🎯 ${deal.title.slice(0,25)}… — ${deal.price_current.toLocaleString('ru')} ₽!`);
@@ -2223,6 +2226,18 @@ async function syncKeywordsToServer(){
       body:JSON.stringify({keywords:kw})
     });
   }catch(e){console.warn('syncKeywords failed',e);}
+}
+async function syncAlertsToServer(){
+  const alerts=getPriceAlerts();
+  const SK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVsdGl5c2thZGJrcmRlbnp4eXltIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MTE5NzkyNSwiZXhwIjoyMDk2NzczOTI1fQ.iDCWNP1HiDOsrio8U_gryohJsrxBKduHXQnIqzkeXYE';
+  const uid=authUser?.id||'949bf2c2-cf66-4e5a-8b80-3259b65c1934';
+  try{
+    await fetch(SB_URL+'/rest/v1/push_tokens?user_id=eq.'+uid,{
+      method:'PATCH',
+      headers:{'apikey':SK,'Authorization':'Bearer '+SK,'Content-Type':'application/json'},
+      body:JSON.stringify({price_alerts:alerts})
+    });
+  }catch(e){console.warn('syncAlerts failed',e);}
 }
 function urlBase64ToUint8Array(base64String){
   const padding='='.repeat((4-base64String.length%4)%4);
