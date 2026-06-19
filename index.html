@@ -658,6 +658,8 @@ const STORES = {
   loverepublic:{name:'Love Republic',logo:'👗',color:'#C62828'},
   mishop:{name:'Mi Shop',logo:'📱',color:'#FF6900'},
   superstep:{name:'SuperStep',logo:'👟',color:'#1A1A1A'},
+  histore:{name:'Hi Store',logo:'🍎',color:'#333333'},
+  technoperry:{name:'Техноперри',logo:'📱',color:'#00B4D8'},
 };
 
 const MARKETPLACE_IDS = ['wildberries','ozon','yandexmarket','sbermegamarket','aliexpress'];
@@ -670,6 +672,8 @@ const FEED_ACTIONS = {
   avitotravel:['ищет жильё'],yandextravel:['ищет отель'],
   tutu:['ищет билеты','смотрит расписание'],sutochno:['ищет жильё','бронирует квартиру'],
   superstep:['смотрит кроссовки','выбирает размер'],
+  histore:['смотрит iPhone','выбирает MacBook'],
+  technoperry:['смотрит гаджет','выбирает технику'],
 };
 
 let allDeals = [];
@@ -887,26 +891,6 @@ function travelPartnersHTML(){
   </a>`).join('')}</div></div>`;
 }
 
-// ── Tech Partners ──
-const TECH_PARTNERS=[
-  {id:'technoperry',title:'Техноперри',desc:'Смартфоны, ноутбуки, гаджеты и аксессуары по выгодным ценам',bg:'linear-gradient(135deg,#1a1a2e,#1a2e3d)',textColor:'#00B4D8',badge:'Техника',badgeColor:'#00B4D8',logo:'📱',url:'https://kpwfp.com/g/50hjecqxsefeadb8007b9732cd853e/?erid=2bL9aMPo2e49hMef4rqyCuhjui'},
-  {id:'histore',title:'Хайстор',desc:'Apple техника и аксессуары — iPhone, Mac, AirPods, Watch',bg:'linear-gradient(135deg,#1a1a2e,#2e2e2e)',textColor:'#E0E0E0',badge:'Apple',badgeColor:'#A3AAAE',logo:'🍎',url:'https://wpmsx.com/g/hwysxaae1bfeadb8007b3a4ea8cf25/?erid=2bL9aMPo2e49hMef4piUAotQ6a'}
-];
-
-function techPartnersHTML(){
-  return `<div class="section"><div class="section-header"><div class="section-title-row"><span class="section-title">📱 Электроника</span></div></div><div class="scroll-row">${TECH_PARTNERS.map(p=>`<a class="promo-card" href="${p.url}" target="_blank" rel="noopener" onclick="addXP(3,'Партнёр')">
-    <div class="promo-card-banner" style="background:${p.bg}">
-      <span class="promo-card-banner-text" style="color:${p.textColor}">${p.logo} ${p.title}</span>
-      <span class="promo-card-badge" style="background:${p.badgeColor}30;color:${p.textColor}">${p.badge}</span>
-    </div>
-    <div class="promo-card-body">
-      <div class="promo-card-title">${p.title}</div>
-      <div class="promo-card-desc">${p.desc}</div>
-      <div class="promo-card-cta">Перейти →</div>
-    </div>
-  </a>`).join('')}</div></div>`;
-}
-
 // ── LiveFeed ──
 function liveFeedHTML(){
   if(!feedEvents.length) return '';
@@ -1038,9 +1022,6 @@ function renderHome(){
 
   // Travel partners
   html+=travelPartnersHTML();
-
-  // Tech partners
-  html+=techPartnersHTML();
 
   // LiveFeed
   html+=liveFeedHTML();
