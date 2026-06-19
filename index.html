@@ -1985,9 +1985,9 @@ function shareDeal(id){
   lines.push('');
   lines.push('Нашёл в DealHunter 📲');
   const text=lines.join('\n');
-  const dealUrl=d.affiliate_url||d.url||'https://pwa.dealhunterapp.online';
+  const dealUrl=`https://pwa.dealhunterapp.online/?deal=${encodeURIComponent(d.id)}`;
   if(navigator.share){
-    navigator.share({title:'DealHunter',text:text+'\n'+dealUrl}).catch(()=>{});
+    navigator.share({title:`${d.title} — DealHunter`,text,url:dealUrl}).catch(()=>{});
   } else {
     navigator.clipboard.writeText(text+'\n'+dealUrl).then(()=>alert('Ссылка скопирована!')).catch(()=>{});
   }
@@ -2124,6 +2124,13 @@ async function init(){
     renderHome();
     startFeedRotation();
     checkAchievements();
+    const sharedDealId=new URLSearchParams(location.search).get('deal');
+    if(sharedDealId){
+      const found=allDeals.find(x=>x.id===sharedDealId);
+      if(found){openDeal(sharedDealId);}
+      else{showXPToast(0,'Скидка устарела — смотри другие!');}
+      history.replaceState(null,'',location.pathname);
+    }
   }catch(err){
     document.getElementById('content').innerHTML='<div style="text-align:center;padding:60px 20px;color:var(--muted)">Не удалось загрузить скидки.<br>Попробуйте позже.</div>';
   }
