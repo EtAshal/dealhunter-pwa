@@ -443,9 +443,8 @@ button{font-family:inherit}
           <div class="prof-pro-feat"><span>⚡</span><span>Ранний доступ к скидкам на 2 часа раньше</span></div>
           <div class="prof-pro-feat"><span>📊</span><span>Полная история цен за 90 дней</span></div>
           <div class="prof-pro-feat"><span>🔔</span><span>Мгновенные push при падении цены</span></div>
-          <div class="prof-pro-feat"><span>🎯</span><span>Безлимитное отслеживание по порогу цены</span></div>
           <div class="prof-pro-feat"><span>❤️</span><span>Безлимитный список желаний</span></div>
-          <div class="prof-pro-feat"><span>🔍</span><span>Отслеживание по ключевым словам</span></div>
+          <div class="prof-pro-feat"><span>🔍</span><span>Безлимитные ключевые слова</span></div>
           <div class="prof-pro-feat"><span>🚫</span><span>Без рекламы</span></div>
         </div>
       </div>
@@ -1564,7 +1563,7 @@ function showProModal(){
     {icon:'⚡',color:'#FFD700',title:'Ранний доступ',desc:'Скидки на 2 часа раньше всех'},
     {icon:'📊',color:'#8B5CF6',title:'История цен 90 дней',desc:'Полный график динамики цены'},
     {icon:'🔔',color:'#FB7185',title:'Мгновенные push',desc:'Уведомление в момент падения цены'},
-    {icon:'♾️',color:'#06D6A0',title:'Безлимит',desc:'Список желаний и отслеживания без ограничений'},
+    {icon:'♾️',color:'#06D6A0',title:'Безлимит',desc:'Список желаний и ключевые слова без ограничений'},
     {icon:'🚫',color:'#60A5FA',title:'Без рекламы',desc:'Чистый интерфейс без баннеров'},
     {icon:'🎖️',color:'#FBBF24',title:'Бейдж PRO',desc:'Статус в ленте «Покупают сейчас»'},
   ];
@@ -1829,12 +1828,15 @@ async function handleTgAuth(){
 function renderWishlist(){
   const body=document.querySelector('#wishlistScreen .screen-body');
   const list=getWishlist();
-  const deals=allDeals.filter(d=>list.includes(d.id));
-  if(!deals.length){
+  if(!list.length){
     body.innerHTML='<div class="empty-state"><div class="empty-icon">💜</div><p>Нажмите ♡ на карточке скидки,<br>чтобы сохранить её сюда</p></div>';
     return;
   }
-  body.innerHTML='<div class="grid-wrap" style="padding:0 16px 20px">'+deals.map(d=>cardHTML(d)).join('')+'</div>';
+  const found=allDeals.filter(d=>list.includes(d.id));
+  const expiredIds=list.filter(id=>!allDeals.find(d=>d.id===id));
+  const expiredHTML=expiredIds.map(id=>`<div style="background:var(--card);border-radius:var(--r-lg);padding:14px;display:flex;align-items:center;gap:12px;opacity:.6"><div style="width:48px;height:48px;border-radius:10px;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:20px">🕐</div><div style="flex:1;min-width:0"><div style="font-size:13px;color:var(--text2)">Скидка устарела</div><div style="font-size:11px;color:var(--muted);margin-top:2px">Товар больше не доступен</div></div><div onclick="event.stopPropagation();let l=getWishlist().filter(x=>x!=='${id}');saveWishlist(l);renderWishlist()" style="width:32px;height:32px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px">✕</div></div>`).join('');
+  const cardsHTML=found.map(d=>cardHTML(d)).join('');
+  body.innerHTML='<div class="grid-wrap" style="padding:0 16px 20px">'+cardsHTML+'</div>'+(expiredHTML?'<div style="padding:0 16px 20px;display:flex;flex-direction:column;gap:8px">'+expiredHTML+'</div>':'');
 }
 
 // ── Price Analyzer ──
