@@ -1740,35 +1740,66 @@ function showAbout(){
   </div>
   <div style="padding:0 16px 40px">
     <div style="text-align:center;padding:8px 0 28px">
-      <div style="width:72px;height:72px;border-radius:20px;background:var(--accent-bg);border:2px solid rgba(139,92,246,0.3);display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 16px">⚡</div>
-      <div style="font-size:28px;font-weight:900;color:var(--text);letter-spacing:-0.5px">DealHunter</div>
-      <div style="font-size:14px;color:var(--muted);margin-top:4px">Версия 1.0</div>
+      <div style="width:80px;height:80px;border-radius:22px;background:linear-gradient(135deg,rgba(139,92,246,0.2),rgba(59,130,246,0.2));border:2px solid rgba(139,92,246,0.3);display:flex;align-items:center;justify-content:center;font-size:40px;margin:0 auto 16px">⚡</div>
+      <div style="font-size:30px;font-weight:900;color:var(--text);letter-spacing:-0.5px">DealHunter</div>
+      <div style="font-size:14px;color:var(--accent);margin-top:4px;font-weight:600">Охотник за скидками</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:6px">Версия 1.0 — 2024–${new Date().getFullYear()}</div>
     </div>
+
     <div style="background:var(--card);border-radius:var(--r-lg);padding:20px;border:1px solid var(--border);margin-bottom:16px">
-      <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:10px">О проекте</div>
-      <div style="font-size:13px;color:var(--text2);line-height:20px">DealHunter — агрегатор скидок и выгодных предложений из проверенных магазинов. Мы собираем лучшие цены, отслеживаем динамику и уведомляем о новых скидках, чтобы вы всегда покупали по лучшей цене.</div>
+      <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:10px">🎯 Что такое DealHunter?</div>
+      <div style="font-size:13px;color:var(--text2);line-height:21px">DealHunter — это умный агрегатор скидок, который собирает лучшие предложения из десятков проверенных магазинов в одном месте. Больше не нужно вручную проверять каждый сайт — мы делаем это автоматически каждые 4 часа и показываем только реально выгодные цены.</div>
+      <div style="font-size:13px;color:var(--text2);line-height:21px;margin-top:10px">Проект создан для тех, кто ценит своё время и деньги. Мы не просто показываем скидки — мы отслеживаем историю цен, чтобы вы видели, реальная ли скидка или маркетинговый трюк.</div>
     </div>
+
     <div style="background:var(--card);border-radius:var(--r-lg);padding:20px;border:1px solid var(--border);margin-bottom:16px">
-      <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:10px">Возможности</div>
-      <div style="display:flex;flex-direction:column;gap:10px">
-        <div style="display:flex;align-items:center;gap:10px"><span style="font-size:16px">🔍</span><span style="font-size:13px;color:var(--text2)">Скидки из 10+ магазинов в одном месте</span></div>
-        <div style="display:flex;align-items:center;gap:10px"><span style="font-size:16px">📊</span><span style="font-size:13px;color:var(--text2)">История цен — видно, реальная ли скидка</span></div>
-        <div style="display:flex;align-items:center;gap:10px"><span style="font-size:16px">🔔</span><span style="font-size:13px;color:var(--text2)">Push-уведомления о горячих скидках</span></div>
-        <div style="display:flex;align-items:center;gap:10px"><span style="font-size:16px">🎯</span><span style="font-size:13px;color:var(--text2)">Пороги цен — сигнал при снижении</span></div>
-        <div style="display:flex;align-items:center;gap:10px"><span style="font-size:16px">🔑</span><span style="font-size:13px;color:var(--text2)">Отслеживание по ключевым словам</span></div>
+      <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:14px">✨ Возможности</div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;align-items:flex-start;gap:12px"><div style="width:36px;height:36px;border-radius:10px;background:#8B5CF622;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🔍</div><div><div style="font-size:13px;font-weight:700;color:var(--text)">10+ магазинов</div><div style="font-size:12px;color:var(--muted);margin-top:2px">Steam, GOG, Epic Games, MTS, Joom, SuperStep, Love Republic, Hi Store и другие — всё в одной ленте</div></div></div>
+        <div style="display:flex;align-items:flex-start;gap:12px"><div style="width:36px;height:36px;border-radius:10px;background:#06D6A022;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">📊</div><div><div style="font-size:13px;font-weight:700;color:var(--text)">История цен до 90 дней</div><div style="font-size:12px;color:var(--muted);margin-top:2px">График динамики цены на каждый товар — сразу видно, была ли цена ниже раньше и стоит ли покупать сейчас</div></div></div>
+        <div style="display:flex;align-items:flex-start;gap:12px"><div style="width:36px;height:36px;border-radius:10px;background:#F9731622;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🔔</div><div><div style="font-size:13px;font-weight:700;color:var(--text)">Умные уведомления</div><div style="font-size:12px;color:var(--muted);margin-top:2px">Push о горячих скидках, персональные алерты по ключевым словам и сигналы при снижении цены до нужной</div></div></div>
+        <div style="display:flex;align-items:flex-start;gap:12px"><div style="width:36px;height:36px;border-radius:10px;background:#FFD70022;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🎯</div><div><div style="font-size:13px;font-weight:700;color:var(--text)">Пороги цен</div><div style="font-size:12px;color:var(--muted);margin-top:2px">Установите желаемую цену на любой товар — мы отправим push, как только цена опустится до неё</div></div></div>
+        <div style="display:flex;align-items:flex-start;gap:12px"><div style="width:36px;height:36px;border-radius:10px;background:#60A5FA22;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🔑</div><div><div style="font-size:13px;font-weight:700;color:var(--text)">Ключевые слова</div><div style="font-size:12px;color:var(--muted);margin-top:2px">Добавьте слова вроде «iPhone», «Nike» или «ноутбук» — получите уведомление, когда появится скидка на нужный товар</div></div></div>
+        <div style="display:flex;align-items:flex-start;gap:12px"><div style="width:36px;height:36px;border-radius:10px;background:#EF444422;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">❤️</div><div><div style="font-size:13px;font-weight:700;color:var(--text)">Избранное и сравнение</div><div style="font-size:12px;color:var(--muted);margin-top:2px">Сохраняйте понравившиеся товары в вишлист, сравнивайте цены между магазинами и отслеживайте экономию</div></div></div>
+        <div style="display:flex;align-items:flex-start;gap:12px"><div style="width:36px;height:36px;border-radius:10px;background:#A78BFA22;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">⚡</div><div><div style="font-size:13px;font-weight:700;color:var(--text)">PRO — ранний доступ</div><div style="font-size:12px;color:var(--muted);margin-top:2px">Подписчики PRO видят новые скидки на 2 часа раньше всех, без рекламы и с безлимитными функциями</div></div></div>
       </div>
     </div>
+
     <div style="background:var(--card);border-radius:var(--r-lg);padding:20px;border:1px solid var(--border);margin-bottom:16px">
-      <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:10px">Создатель</div>
-      <div style="font-size:13px;color:var(--text2);line-height:20px">Независимый проект, созданный энтузиастом выгодных покупок. Если вам нравится DealHunter — поделитесь с друзьями!</div>
-      <div style="margin-top:12px;display:flex;gap:8px">
-        <a href="mailto:etashal760@gmail.com" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:var(--surface);border-radius:var(--r-md);color:var(--text2);text-decoration:none;font-size:12px;font-weight:600">💬 Написать</a>
-        <a href="https://dealhunterapp.online" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:var(--surface);border-radius:var(--r-md);color:var(--text2);text-decoration:none;font-size:12px;font-weight:600">🌐 Сайт</a>
+      <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:14px">🛡️ Как это работает</div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;align-items:center;gap:12px"><div style="width:28px;height:28px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0">1</div><div style="font-size:13px;color:var(--text2);line-height:18px">Наши парсеры каждые 4 часа сканируют магазины-партнёры и собирают актуальные цены</div></div>
+        <div style="display:flex;align-items:center;gap:12px"><div style="width:28px;height:28px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0">2</div><div style="font-size:13px;color:var(--text2);line-height:18px">Алгоритм фильтрует мусор и оставляет только реальные скидки с проверенными картинками</div></div>
+        <div style="display:flex;align-items:center;gap:12px"><div style="width:28px;height:28px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0">3</div><div style="font-size:13px;color:var(--text2);line-height:18px">Каждая цена записывается в историю — вы видите график и понимаете, выгодно ли покупать</div></div>
+        <div style="display:flex;align-items:center;gap:12px"><div style="width:28px;height:28px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0">4</div><div style="font-size:13px;color:var(--text2);line-height:18px">При переходе по ссылке вы попадаете напрямую в магазин — мы не продаём товары, только показываем где дешевле</div></div>
       </div>
     </div>
-    <div style="text-align:center;padding:16px 0">
-      <div style="font-size:12px;color:var(--muted)">Сделано с ❤️ в России</div>
-      <div style="font-size:11px;color:var(--muted);margin-top:4px">© ${new Date().getFullYear()} DealHunter. Все права защищены.</div>
+
+    <div style="background:linear-gradient(135deg,rgba(139,92,246,0.1),rgba(59,130,246,0.1));border-radius:var(--r-lg);padding:20px;border:1px solid rgba(139,92,246,0.2);margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">
+        <div style="width:48px;height:48px;border-radius:14px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:#fff;flex-shrink:0">E</div>
+        <div>
+          <div style="font-size:16px;font-weight:800;color:var(--text)">etashal</div>
+          <div style="font-size:12px;color:var(--accent);font-weight:600">Разработчик</div>
+        </div>
+      </div>
+      <div style="font-size:13px;color:var(--text2);line-height:21px">Привет! Я — etashal, создатель DealHunter. Этот проект я разрабатываю один, потому что сам устал тратить время на поиск скидок по разным сайтам. Мне важно, чтобы каждый мог экономить без лишних усилий.</div>
+      <div style="font-size:13px;color:var(--text2);line-height:21px;margin-top:8px">Если у вас есть идеи, нашли баг или просто хотите сказать спасибо — пишите, я читаю каждое сообщение.</div>
+      <div style="margin-top:14px;display:flex;gap:8px">
+        <a href="mailto:etashal760@gmail.com" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:11px;background:rgba(255,255,255,0.08);border-radius:var(--r-md);color:var(--text);text-decoration:none;font-size:13px;font-weight:700;border:1px solid rgba(255,255,255,0.1)">💬 Написать</a>
+        <a href="https://dealhunterapp.online" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:11px;background:rgba(255,255,255,0.08);border-radius:var(--r-md);color:var(--text);text-decoration:none;font-size:13px;font-weight:700;border:1px solid rgba(255,255,255,0.1)">🌐 Сайт</a>
+      </div>
+    </div>
+
+    <div style="background:var(--card);border-radius:var(--r-lg);padding:20px;border:1px solid var(--border);margin-bottom:16px">
+      <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:10px">📌 Важно знать</div>
+      <div style="font-size:12px;color:var(--muted);line-height:19px">DealHunter — бесплатный агрегатор. Мы зарабатываем на партнёрских программах: когда вы переходите в магазин по нашей ссылке и совершаете покупку, магазин платит нам небольшую комиссию. Для вас цена остаётся такой же — вы ничего не переплачиваете, но поддерживаете развитие проекта.</div>
+    </div>
+
+    <div style="text-align:center;padding:20px 0 8px">
+      <div style="font-size:13px;color:var(--muted)">Сделано с ❤️ в России</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:6px">© ${new Date().getFullYear()} DealHunter. Все права защищены.</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px">dealhunterapp.online</div>
     </div>
   </div>`;
   overlay.classList.add('open');
