@@ -829,7 +829,7 @@ function renderCats(){
     </button>`;
   }).join('');
   el.querySelectorAll('.cat-chip').forEach(btn=>{
-    btn.onclick=()=>{activeCategory=btn.dataset.cat;renderCats();renderHome();}
+    btn.onclick=()=>{activeCategory=btn.dataset.cat;renderCats();renderHome();document.querySelector('.main-scroll')?.scrollTo(0,0);}
   });
 }
 
