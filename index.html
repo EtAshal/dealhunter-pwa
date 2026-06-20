@@ -1223,11 +1223,7 @@ function trackReport(){
   checkAchievements();
 }
 function trackInvite(){
-  const p=getProfile();
-  p.invited++;
-  addXP(20,'Приглашение друга');
-  saveProfile(p);
-  checkAchievements();
+  addXP(5,'Поделился кодом');
 }
 
 function updateStreak(){
@@ -1539,6 +1535,11 @@ function showAchievementsModal(){
 }
 
 // ── Referral code ──
+function getDeviceId(){
+  let id=localStorage.getItem('dh_device_id');
+  if(!id){id=crypto.randomUUID();localStorage.setItem('dh_device_id',id);}
+  return id;
+}
 function getRefCode(){
   let code=localStorage.getItem('dh_refcode');
   if(!code){
@@ -1546,22 +1547,39 @@ function getRefCode(){
     code='DH-';
     for(let i=0;i<5;i++) code+=chars[Math.floor(Math.random()*chars.length)];
     localStorage.setItem('dh_refcode',code);
+    registerRefCode(code);
   }
   return code;
 }
-function getRefStats(){
-  const p=getProfile();
-  const invited=p.invited||0;
+async function registerRefCode(code){
+  try{await fetch(SB_URL+'/rest/v1/referrals',{method:'POST',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({code,owner_id:getDeviceId()})});}catch{}
+}
+async function ensureRefCodeRegistered(){
+  const code=getRefCode();
+  try{
+    const r=await fetch(SB_URL+'/rest/v1/referrals?code=eq.'+encodeURIComponent(code),{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
+    const d=await r.json();
+    if(!d.length) await registerRefCode(code);
+  }catch{}
+}
+async function getRefStats(){
+  const code=getRefCode();
+  let invited=0;
+  try{
+    const r=await fetch(SB_URL+'/rest/v1/referrals?code=eq.'+encodeURIComponent(code)+'&select=redeemed_count',{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
+    const d=await r.json();
+    if(d.length) invited=d[0].redeemed_count||0;
+  }catch{}
   let earnedDays=0;
   if(invited>=3) earnedDays+=7;
   if(invited>=10) earnedDays+=14;
   return {invited,earnedDays};
 }
 
-function inviteFriend(){
+async function inviteFriend(){
   const code=getRefCode();
   const p=getProfile();
-  const {invited,earnedDays}=getRefStats();
+  const {invited,earnedDays}=await getRefStats();
   const REWARDS=[{count:3,reward:'7 дней PRO',icon:'⭐'},{count:10,reward:'14 дней PRO',icon:'🏆'}];
   const overlay=document.getElementById('detailOverlay');
   const modal=document.getElementById('detailModal');
@@ -1627,13 +1645,26 @@ function shareRefCode(){
   if(navigator.share){navigator.share({title:'DealHunter',text,url}).then(()=>trackInvite()).catch(()=>{});}
   else{navigator.clipboard.writeText(text+' '+url).then(()=>{trackInvite();alert('Ссылка скопирована!');});}
 }
-function redeemRefCode(){
+async function redeemRefCode(){
   const input=document.getElementById('redeemInput');
   const code=input?input.value.trim().toUpperCase():'';
   if(!code||code.length<3){alert('Введите код друга');return;}
   if(code===getRefCode()){alert('Нельзя использовать свой код');return;}
   const p=getProfile();
   if(p.redeemedCode){alert('Вы уже активировали код друга');return;}
+  const deviceId=getDeviceId();
+  try{
+    const chk=await fetch(SB_URL+'/rest/v1/referrals?code=eq.'+encodeURIComponent(code),{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
+    const refs=await chk.json();
+    if(!refs.length){alert('Код не найден. Проверьте правильность.');return;}
+    if(refs[0].owner_id===deviceId){alert('Нельзя использовать свой код');return;}
+    const used=await fetch(SB_URL+'/rest/v1/referral_uses?redeemer_id=eq.'+deviceId,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
+    const usedData=await used.json();
+    if(usedData.length){alert('Вы уже активировали реферальный код');return;}
+    const ins=await fetch(SB_URL+'/rest/v1/referral_uses',{method:'POST',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({code,redeemer_id:deviceId})});
+    if(!ins.ok){alert('Ошибка активации. Попробуйте позже.');return;}
+    await fetch(SB_URL+'/rest/v1/referrals?code=eq.'+encodeURIComponent(code),{method:'PATCH',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({redeemed_count:refs[0].redeemed_count+1})});
+  }catch(e){alert('Ошибка сети. Попробуйте позже.');return;}
   p.redeemedCode=code;
   saveProfile(p);
   activatePro(7);
@@ -2266,6 +2297,7 @@ async function init(){
     startFeedRotation();
     checkAchievements();
     checkExpiredAlerts();
+    ensureRefCodeRegistered();
     const sharedDealId=new URLSearchParams(location.search).get('deal');
     if(sharedDealId){
       const found=allDeals.find(x=>x.id===sharedDealId);
