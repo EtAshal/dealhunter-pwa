@@ -1034,7 +1034,7 @@ function renderHome(){
   html+=dealOfTheDayHTML(deals);
 
   // Hot deals
-  const hot=deals.filter(d=>d.is_hot||d.is_free).slice(0,12);
+  const hot=deals.filter(d=>d.is_hot||d.is_free||d.discount>=50).slice(0,12);
   if(hot.length){
     html+=`<div class="section"><div class="section-header"><div class="section-title-row"><span class="section-title">🔥 Горящие скидки</span></div><span class="see-all">Все</span></div><div class="scroll-row">${hot.map(d=>cardHTML(d)).join('')}</div></div>`;
   }
