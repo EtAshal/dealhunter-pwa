@@ -359,6 +359,7 @@ button{font-family:inherit}
         </div>
       </div>
       <div class="header-btns">
+        <div class="header-btn" title="Установить" onclick="showInstallGuide()"><svg width="20" height="20" viewBox="0 0 512 512" fill="none" stroke="currentColor" stroke-width="32" stroke-linecap="round" stroke-linejoin="round"><path d="M336 176h40a40 40 0 0140 40v208a40 40 0 01-40 40H136a40 40 0 01-40-40V216a40 40 0 0140-40h40"/><polyline points="176 272 256 352 336 272"/><line x1="256" y1="48" x2="256" y2="336"/></svg></div>
         <div class="header-btn" title="История" onclick="showHistoryModal()"><svg width="20" height="20" viewBox="0 0 512 512" fill="none" stroke="currentColor" stroke-width="32" stroke-linecap="round" stroke-linejoin="round"><path d="M256 64C150 64 64 150 64 256s86 192 192 192 192-86 192-192S362 64 256 64z"/><polyline points="256 128 256 272 352 320"/></svg></div>
         <div class="header-btn" title="Уведомления" onclick="showNotificationsModal()"><svg width="20" height="20" viewBox="0 0 512 512" fill="currentColor"><path d="M440.08 341.31c-1.66-2-3.29-4-4.89-5.93-22-26.61-35.31-42.67-35.31-118 0-39-9.33-71-27.72-95-13.56-17.73-31.89-31.18-56.05-41.12a3.42 3.42 0 01-.19-.14C305.67 40.08 282.87 16 256 16s-49.67 24.08-60 65.12c-.06.05-.12.09-.19.14-24.16 9.94-42.49 23.39-56 41.12C121.21 146.38 112 178.38 112 217.38c0 75.38-13.27 91.44-35.31 118-1.6 1.93-3.23 3.89-4.89 5.93a35.16 35.16 0 00-4.65 37.62C73.71 392.44 88.33 400 104 400h304c15.67 0 30.29-7.56 36.85-21.07a35.16 35.16 0 00-4.77-37.62zM256 480a80.06 80.06 0 0070.44-42H185.56A80.06 80.06 0 00256 480z"/></svg></div>
       </div>
@@ -1856,6 +1857,66 @@ function handleProPurchase(){
     closeDeal();
     updateProfileUI();
   }
+}
+
+// ── Install Guide Modal ──
+function showInstallGuide(){
+  const ua=navigator.userAgent||'';
+  const isIOS=/iPhone|iPad|iPod/.test(ua);
+  const isAndroid=/Android/.test(ua);
+  const overlay=document.getElementById('detailOverlay');
+  const modal=document.getElementById('detailModal');
+  modal.innerHTML=`
+  <div style="position:sticky;top:0;z-index:10;background:var(--bg);padding:12px 16px;padding-top:max(12px,env(safe-area-inset-top))">
+    <div class="detail-back-btn" style="position:static;background:rgba(255,255,255,0.08);color:var(--text)" onclick="closeDeal()"><svg width="20" height="20" viewBox="0 0 512 512" fill="none" stroke="currentColor" stroke-width="48" stroke-linecap="round" stroke-linejoin="round"><line x1="368" y1="368" x2="144" y2="144"/><line x1="368" y1="144" x2="144" y2="368"/></svg></div>
+  </div>
+  <div style="padding:0 16px 40px">
+    <div style="text-align:center;padding:8px 0 24px">
+      <div style="font-size:40px;margin-bottom:12px">📲</div>
+      <div style="font-size:24px;font-weight:900;color:var(--text)">Установить Deal<span style="color:var(--accent)">Hunter</span></div>
+      <div style="font-size:13px;color:var(--muted);margin-top:6px">Добавьте на главный экран для быстрого доступа</div>
+    </div>
+
+    ${isIOS?`<div style="background:var(--card);border-radius:var(--r-lg);padding:20px;border:1px solid var(--border);margin-bottom:16px">
+      <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:14px"> iPhone / iPad (Safari)</div>
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div style="display:flex;align-items:flex-start;gap:12px"><div style="width:32px;height:32px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0">1</div><div style="font-size:13px;color:var(--text2);line-height:20px">Откройте этот сайт в <b style="color:var(--text)">Safari</b> (в других браузерах не работает)</div></div>
+        <div style="display:flex;align-items:flex-start;gap:12px"><div style="width:32px;height:32px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0">2</div><div style="font-size:13px;color:var(--text2);line-height:20px">Нажмите кнопку <b style="color:var(--text)">«Поделиться»</b> <span style="font-size:18px;vertical-align:middle">⎙</span> внизу экрана</div></div>
+        <div style="display:flex;align-items:flex-start;gap:12px"><div style="width:32px;height:32px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0">3</div><div style="font-size:13px;color:var(--text2);line-height:20px">Пролистайте вниз и выберите <b style="color:var(--text)">«На экран Домой»</b></div></div>
+        <div style="display:flex;align-items:flex-start;gap:12px"><div style="width:32px;height:32px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0">4</div><div style="font-size:13px;color:var(--text2);line-height:20px">Нажмите <b style="color:var(--text)">«Добавить»</b> — готово!</div></div>
+      </div>
+    </div>`:''}
+
+    ${isAndroid?`<div style="background:var(--card);border-radius:var(--r-lg);padding:20px;border:1px solid var(--border);margin-bottom:16px">
+      <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:14px">🤖 Android (Chrome)</div>
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div style="display:flex;align-items:flex-start;gap:12px"><div style="width:32px;height:32px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0">1</div><div style="font-size:13px;color:var(--text2);line-height:20px">Откройте этот сайт в <b style="color:var(--text)">Chrome</b></div></div>
+        <div style="display:flex;align-items:flex-start;gap:12px"><div style="width:32px;height:32px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0">2</div><div style="font-size:13px;color:var(--text2);line-height:20px">Нажмите <b style="color:var(--text)">⋮</b> (три точки) в правом верхнем углу</div></div>
+        <div style="display:flex;align-items:flex-start;gap:12px"><div style="width:32px;height:32px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0">3</div><div style="font-size:13px;color:var(--text2);line-height:20px">Выберите <b style="color:var(--text)">«Установить приложение»</b> или <b style="color:var(--text)">«Добавить на главный экран»</b></div></div>
+        <div style="display:flex;align-items:flex-start;gap:12px"><div style="width:32px;height:32px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0">4</div><div style="font-size:13px;color:var(--text2);line-height:20px">Подтвердите — приложение появится на рабочем столе</div></div>
+      </div>
+    </div>`:''}
+
+    ${!isIOS&&!isAndroid?`
+    <div style="background:var(--card);border-radius:var(--r-lg);padding:20px;border:1px solid var(--border);margin-bottom:16px">
+      <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:14px"> iPhone / iPad</div>
+      <div style="font-size:13px;color:var(--text2);line-height:20px">Safari → кнопка «Поделиться» ⎙ → «На экран Домой» → «Добавить»</div>
+    </div>
+    <div style="background:var(--card);border-radius:var(--r-lg);padding:20px;border:1px solid var(--border);margin-bottom:16px">
+      <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:14px">🤖 Android</div>
+      <div style="font-size:13px;color:var(--text2);line-height:20px">Chrome → ⋮ меню → «Установить приложение» или «Добавить на главный экран»</div>
+    </div>
+    <div style="background:var(--card);border-radius:var(--r-lg);padding:20px;border:1px solid var(--border);margin-bottom:16px">
+      <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:14px">💻 Компьютер (Chrome / Edge)</div>
+      <div style="font-size:13px;color:var(--text2);line-height:20px">Нажмите значок установки ⊕ в адресной строке → «Установить»</div>
+    </div>`:''}
+
+    <div style="background:linear-gradient(135deg,rgba(6,214,160,0.1),rgba(139,92,246,0.1));border-radius:var(--r-lg);padding:16px;border:1px solid rgba(6,214,160,0.2);margin-bottom:16px">
+      <div style="font-size:13px;color:var(--text2);line-height:20px;text-align:center">✅ После установки Deal<span style="color:var(--accent)">Hunter</span> откроется как полноценное приложение — без адресной строки, с push-уведомлениями и быстрым доступом с домашнего экрана</div>
+    </div>
+  </div>`;
+  overlay.classList.add('open');
+  document.body.style.overflow='hidden';
 }
 
 // ── History Modal ──
