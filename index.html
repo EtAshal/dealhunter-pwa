@@ -1063,13 +1063,6 @@ function renderHome(){
   // Home: all sections
   let html='';
 
-  // Recently viewed
-  const histIds=getViewHistory();
-  const histDeals=histIds.map(id=>deals.find(d=>d.id===id)).filter(Boolean).slice(0,10);
-  if(histDeals.length){
-    html+=`<div class="section"><div class="section-header"><div class="section-title-row"><span class="section-title">🕐 Недавно просмотренные</span></div><span class="see-all" onclick="showHistoryModal()">Все →</span></div><div class="scroll-row">${histDeals.map(d=>cardHTML(d)).join('')}</div></div>`;
-  }
-
   // Deal of the Day
   html+=dealOfTheDayHTML(deals);
 
