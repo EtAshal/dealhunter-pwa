@@ -1670,6 +1670,18 @@ function showAchievementsModal(){
 }
 
 // ── Referral code ──
+async function sbFetch(url,opts={},retries=3){
+  for(let i=0;i<retries;i++){
+    try{
+      const r=await fetch(url,opts);
+      if(r.ok||r.status===409) return r;
+      if(i<retries-1) await new Promise(r=>setTimeout(r,1000*(i+1)));
+    }catch(e){
+      if(i===retries-1) throw e;
+      await new Promise(r=>setTimeout(r,1000*(i+1)));
+    }
+  }
+}
 function getDeviceId(){
   let id=localStorage.getItem('dh_device_id');
   if(!id){id=crypto.randomUUID();localStorage.setItem('dh_device_id',id);}
@@ -1687,24 +1699,28 @@ function getRefCode(){
   return code;
 }
 async function registerRefCode(code){
-  try{await fetch(SB_URL+'/rest/v1/referrals',{method:'POST',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({code,owner_id:getDeviceId()})});}catch{}
+  try{await sbFetch(SB_URL+'/rest/v1/referrals',{method:'POST',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({code,owner_id:getDeviceId()})});}catch{}
 }
 async function ensureRefCodeRegistered(){
   const code=getRefCode();
   try{
-    const r=await fetch(SB_URL+'/rest/v1/referrals?code=eq.'+encodeURIComponent(code),{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
+    const r=await sbFetch(SB_URL+'/rest/v1/referrals?code=eq.'+encodeURIComponent(code),{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
     const d=await r.json();
     if(!d.length) await registerRefCode(code);
   }catch{}
 }
 async function getRefStats(){
   const code=getRefCode();
+  const cacheKey='dh_ref_stats';
   let invited=0;
   try{
-    const r=await fetch(SB_URL+'/rest/v1/referral_uses?code=eq.'+encodeURIComponent(code)+'&select=id',{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
+    const r=await sbFetch(SB_URL+'/rest/v1/referral_uses?code=eq.'+encodeURIComponent(code)+'&select=id',{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
     const d=await r.json();
     invited=d.length||0;
-  }catch{}
+    localStorage.setItem(cacheKey,JSON.stringify({invited,ts:Date.now()}));
+  }catch{
+    try{const c=JSON.parse(localStorage.getItem(cacheKey));if(c) invited=c.invited;}catch{}
+  }
   let earnedDays=0;
   if(invited>=3) earnedDays+=7;
   if(invited>=10) earnedDays+=14;
@@ -1792,18 +1808,23 @@ async function redeemRefCode(){
   const p=getProfile();
   if(p.redeemedCode){alert('Вы уже активировали код друга');return;}
   const deviceId=getDeviceId();
+  const btn=input?.nextElementSibling;
+  if(btn){btn.disabled=true;btn.textContent='...';}
   try{
-    const chk=await fetch(SB_URL+'/rest/v1/referrals?code=eq.'+encodeURIComponent(code),{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
+    const chk=await sbFetch(SB_URL+'/rest/v1/referrals?code=eq.'+encodeURIComponent(code),{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
     const refs=await chk.json();
     if(!refs.length){alert('Код не найден. Проверьте правильность.');return;}
     if(refs[0].owner_id===deviceId){alert('Нельзя использовать свой код');return;}
-    const used=await fetch(SB_URL+'/rest/v1/referral_uses?redeemer_id=eq.'+deviceId,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
+    const used=await sbFetch(SB_URL+'/rest/v1/referral_uses?redeemer_id=eq.'+deviceId,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
     const usedData=await used.json();
-    if(usedData.length){alert('Вы уже активировали реферальный код');return;}
-    const ins=await fetch(SB_URL+'/rest/v1/referral_uses',{method:'POST',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({code,redeemer_id:deviceId})});
-    if(!ins.ok){alert('Ошибка активации. Попробуйте позже.');return;}
-    await fetch(SB_URL+'/rest/v1/referrals?code=eq.'+encodeURIComponent(code),{method:'PATCH',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({redeemed_count:refs[0].redeemed_count+1})});
-  }catch(e){alert('Ошибка: '+e.message);return;}
+    if(usedData.length){p.redeemedCode=code;saveProfile(p);alert('Вы уже активировали реферальный код');return;}
+    const ins=await sbFetch(SB_URL+'/rest/v1/referral_uses',{method:'POST',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify({code,redeemer_id:deviceId})});
+    if(!ins.ok){const t=await ins.text();alert('Ошибка активации. Попробуйте позже.');return;}
+    const inserted=await ins.json();
+    if(!inserted.length){alert('Ошибка сохранения. Попробуйте ещё раз.');return;}
+    await sbFetch(SB_URL+'/rest/v1/referrals?code=eq.'+encodeURIComponent(code),{method:'PATCH',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({redeemed_count:refs[0].redeemed_count+1})}).catch(()=>{});
+  }catch(e){alert('Ошибка сети. Проверьте интернет и попробуйте снова.');return;}
+  finally{if(btn){btn.disabled=false;btn.textContent='Активировать';}}
   p.redeemedCode=code;
   saveProfile(p);
   addXP(20,'Код друга активирован');
