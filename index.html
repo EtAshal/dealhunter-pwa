@@ -651,8 +651,8 @@ async function authTelegram(){
 
 sb.auth.getSession().then(({data:{session}})=>{
   authUser=session?.user||null;
-  if(authUser)loadAuthProfile(authUser.id).then(()=>loadFromCloud()).then(()=>updateProfileUI());
-  else loadFromCloud().then(()=>updateProfileUI());
+  if(authUser)loadAuthProfile(authUser.id).then(()=>loadFromCloud()).then(()=>{syncToCloud();updateProfileUI();});
+  else loadFromCloud().then(()=>{syncToCloud();updateProfileUI();});
 });
 sb.auth.onAuthStateChange((_ev,session)=>{
   authUser=session?.user||null;
@@ -1223,34 +1223,38 @@ async function loadFromCloud(){
   _loadingCloud=true;
   const did=getDeviceId();
   try{
+    const allRows=[];
     let r=await sbFetch(SB_URL+'/rest/v1/device_profiles?device_id=eq.'+did,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
-    let rows=await r.json();
-    if(!rows.length&&authUser){
-      r=await sbFetch(SB_URL+'/rest/v1/device_profiles?auth_user_id=eq.'+authUser.id+'&order=updated_at.desc&limit=1',{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
-      rows=await r.json();
+    let own=await r.json();
+    allRows.push(...own);
+    if(authUser){
+      r=await sbFetch(SB_URL+'/rest/v1/device_profiles?auth_user_id=eq.'+authUser.id+'&order=xp.desc',{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
+      const acct=await r.json();
+      for(const a of acct){if(!allRows.find(x=>x.device_id===a.device_id))allRows.push(a);}
     }
-    if(!rows.length){_loadingCloud=false;return;}
-    const c=rows[0];
+    if(!allRows.length){_loadingCloud=false;return;}
+    const best=allRows.reduce((a,b)=>(b.xp||0)>(a.xp||0)?b:a,allRows[0]);
     const local=getProfile();
-    if((c.xp||0)>(local.xp||0)){
-      local.xp=c.xp||0;local.views=c.views||0;local.wishes=c.wishes||0;
-      local.shares=c.shares||0;local.reports=c.reports||0;local.streak=c.streak||1;
-      local.lastVisit=c.last_visit||local.lastVisit;local.invited=c.invited||0;
-      if(c.keywords?.length)local.keywords=c.keywords;
-      if(c.unlocked?.length)local.unlocked=c.unlocked;
-      if(c.interests&&Object.keys(c.interests).length)local.interests=c.interests;
-      local.nightOwl=c.night_owl||false;
-      if(c.pro_until)local.proUntil=c.pro_until;
-      if(c.redeemed_code)local.redeemedCode=c.redeemed_code;
+    if((best.xp||0)>(local.xp||0)){
+      local.xp=best.xp||0;local.views=best.views||0;local.wishes=best.wishes||0;
+      local.shares=best.shares||0;local.reports=best.reports||0;local.streak=best.streak||1;
+      local.lastVisit=best.last_visit||local.lastVisit;local.invited=best.invited||0;
+      if(best.keywords?.length)local.keywords=best.keywords;
+      if(best.unlocked?.length)local.unlocked=best.unlocked;
+      if(best.interests&&Object.keys(best.interests).length)local.interests=best.interests;
+      local.nightOwl=best.night_owl||false;
+      if(best.pro_until)local.proUntil=best.pro_until;
+      if(best.redeemed_code)local.redeemedCode=best.redeemed_code;
       localStorage.setItem('dh_profile',JSON.stringify(local));
     }
     const lw=getWishlist();
-    if(c.wishlist?.length){
-      const merged=[...new Set([...lw,...c.wishlist])];
-      localStorage.setItem('dh_wishlist',JSON.stringify(merged));
-    }
-    if(!localStorage.getItem('dh_refcode')&&c.ref_code){
-      localStorage.setItem('dh_refcode',c.ref_code);
+    let allWish=[...lw];
+    for(const row of allRows){if(row.wishlist?.length)allWish.push(...row.wishlist);}
+    const merged=[...new Set(allWish)];
+    if(merged.length>lw.length) localStorage.setItem('dh_wishlist',JSON.stringify(merged));
+    if(!localStorage.getItem('dh_refcode')){
+      const rc=allRows.find(r=>r.ref_code);
+      if(rc) localStorage.setItem('dh_refcode',rc.ref_code);
     }
     if(!getPriceAlerts().length&&c.price_alerts?.length){
       localStorage.setItem('dh_price_alerts',JSON.stringify(c.price_alerts));
