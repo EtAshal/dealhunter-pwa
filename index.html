@@ -1244,7 +1244,9 @@ function initTheme(){
     if(lbl) lbl.textContent='Светлая тема';
   }
 }
-function isPro(){const p=getProfile();if(!p.proUntil)return false;return new Date(p.proUntil)>new Date()}
+const DEV_IDS=['949bf2c2-cf66-4e5a-8b80-3259b65c1934'];
+function isDev(){return DEV_IDS.includes(authUser?.id)||DEV_IDS.includes(localStorage.getItem('dh_device_id'))}
+function isPro(){if(isDev())return true;const p=getProfile();if(!p.proUntil)return false;return new Date(p.proUntil)>new Date()}
 function activatePro(days){const p=getProfile();const until=new Date();until.setDate(until.getDate()+days);p.proUntil=until.toISOString();saveProfile(p);syncProStatus(true)}
 async function syncProStatus(isPro){if(!authUser)return;try{await sb.from('user_profiles').update({is_pro:isPro}).eq('id',authUser.id)}catch{}}
 const FREE_WISH_LIMIT=5;
