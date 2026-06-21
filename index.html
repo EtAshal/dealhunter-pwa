@@ -1875,7 +1875,7 @@ function showProModal(){
   document.body.style.overflow='hidden';
 }
 
-const PAY_API = 'https://dealhunterapp.online/pay';
+const PAY_API = 'https://ultiyskadbkrdenzxyym.supabase.co/functions/v1';
 
 async function handleProPurchase(){
   const plan=localStorage.getItem('dh_pro_plan')||'pro-3month';
@@ -1886,7 +1886,7 @@ async function handleProPurchase(){
     const userId = localStorage.getItem('dh_device_id') || authUser?.id;
     if(!userId){alert('Ошибка: не удалось определить пользователя');return;}
 
-    const res = await fetch(`${PAY_API}/create`, {
+    const res = await fetch(`${PAY_API}/create-payment`, {
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({plan, user_id:userId, return_url:window.location.origin+'/?pro=success'}),
