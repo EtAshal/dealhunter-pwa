@@ -651,11 +651,11 @@ async function authTelegram(){
 
 sb.auth.getSession().then(({data:{session}})=>{
   authUser=session?.user||null;
-  if(authUser)loadAuthProfile(authUser.id).then(()=>updateProfileUI());
+  if(authUser)loadAuthProfile(authUser.id).then(()=>loadProfileFromSupabase()).then(()=>updateProfileUI());
 });
 sb.auth.onAuthStateChange((_ev,session)=>{
   authUser=session?.user||null;
-  if(authUser)loadAuthProfile(authUser.id).then(()=>updateProfileUI());
+  if(authUser)loadAuthProfile(authUser.id).then(()=>loadProfileFromSupabase()).then(()=>updateProfileUI());
   else{authProfile=null;updateProfileUI();}
 });
 
@@ -1173,7 +1173,45 @@ function getProfile(){
 function defaultProfile(){
   return {xp:0,views:0,wishes:0,shares:0,reports:0,streak:1,lastVisit:new Date().toDateString(),invited:0,keywords:[],notif:{hot:true,priceDrop:true},interests:{games:true,clothes:true,market:true,travel:true,electronics:true},nightOwl:false,unlocked:[],proUntil:null};
 }
-function saveProfile(p){localStorage.setItem('dh_profile',JSON.stringify(p))}
+function saveProfile(p){
+  localStorage.setItem('dh_profile',JSON.stringify(p));
+  debounceSyncProfile();
+}
+let _syncTimer=null;
+function debounceSyncProfile(){
+  if(_syncTimer)clearTimeout(_syncTimer);
+  _syncTimer=setTimeout(syncProfileToSupabase,3000);
+}
+async function syncProfileToSupabase(){
+  if(!authUser)return;
+  const p=getProfile();
+  try{await sb.from('user_profiles').update({
+    xp:p.xp,views:p.views,wishes:p.wishes,shares:p.shares,reports:p.reports,
+    streak:p.streak,last_visit:p.lastVisit,invited:p.invited,
+    keywords:p.keywords,unlocked:p.unlocked,
+    interests:p.interests,night_owl:p.nightOwl,
+    pro_until:p.proUntil
+  }).eq('id',authUser.id)}catch{}
+}
+async function loadProfileFromSupabase(){
+  if(!authUser)return;
+  try{
+    const{data}=await sb.from('user_profiles').select('xp,views,wishes,shares,reports,streak,last_visit,invited,keywords,unlocked,interests,night_owl,pro_until').eq('id',authUser.id).single();
+    if(!data||data.xp===null)return;
+    const local=getProfile();
+    if((data.xp||0)>=(local.xp||0)){
+      local.xp=data.xp||0;local.views=data.views||0;local.wishes=data.wishes||0;
+      local.shares=data.shares||0;local.reports=data.reports||0;local.streak=data.streak||1;
+      local.lastVisit=data.last_visit||local.lastVisit;local.invited=data.invited||0;
+      if(data.keywords?.length)local.keywords=data.keywords;
+      if(data.unlocked?.length)local.unlocked=data.unlocked;
+      if(data.interests)local.interests=data.interests;
+      local.nightOwl=data.night_owl||false;
+      if(data.pro_until)local.proUntil=data.pro_until;
+      localStorage.setItem('dh_profile',JSON.stringify(local));
+    }
+  }catch{}
+}
 
 function toggleTheme(isDark){
   document.documentElement.classList.add('transitioning');
