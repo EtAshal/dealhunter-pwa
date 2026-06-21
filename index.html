@@ -26,8 +26,25 @@
   --catTravel:#F59E0B;--catTech:#38BDF8;
   --r-sm:8px;--r-md:12px;--r-lg:16px;--r-xl:24px;--r-pill:100px;
 }
-html,body{height:100%;margin:0;padding:0;overflow:hidden;background:#0A0D1A}
-body{background:#0A0D1A;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',Roboto,sans-serif;-webkit-font-smoothing:antialiased;display:flex;flex-direction:column}
+html.light{
+  --bg:#F5F3F7;--card:#FFFFFF;--card2:#F0EDF4;--tag:#EDE5F7;
+  --accent:#9333EA;--accentDim:#7C3AED;--accentGlow:rgba(147,51,234,0.1);
+  --deal:#E11D48;--dealBg:#FFF1F2;
+  --text:#1A1A2E;--text2:#64607A;--muted:#9E99B0;
+  --border:#E5E1ED;--borderL:#D4D0DE;
+  --catGames:#9333EA;--catClothes:#E11D48;--catMarket:#059669;
+  --catTravel:#D97706;--catTech:#0284C7;
+}
+html.light body{background:#F0EDF4}
+html.light .header{background:#F5F3F7}
+html.light .cats-wrap{background:#F5F3F7}
+html.light .tab-bar{background:rgba(255,255,255,0.95);border-top:1px solid var(--border)}
+html.light .dotd-header{background:#F0EDF4}
+html.light .detail-modal{background:#F5F3F7}
+html.light .detail-back-btn{background:rgba(255,255,255,0.7);color:#1A1A2E}
+html.light .install-btn{background:var(--accent);color:#fff}
+html,body{height:100%;margin:0;padding:0;overflow:hidden;background:var(--bg)}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',Roboto,sans-serif;-webkit-font-smoothing:antialiased;display:flex;flex-direction:column}
 a{color:inherit;text-decoration:none}
 button{font-family:inherit}
 
@@ -505,6 +522,15 @@ button{font-family:inherit}
           <span class="prof-toggle-icon">📱</span>
           <span class="prof-toggle-label">Электроника</span>
           <label class="prof-toggle"><input type="checkbox" checked data-interest="electronics"><span class="prof-toggle-track"></span></label>
+        </div>
+      </div>
+
+      <div class="prof-section">ВНЕШНИЙ ВИД</div>
+      <div class="prof-toggles-card">
+        <div class="prof-toggle-row">
+          <span class="prof-toggle-icon" id="themeIcon">🌙</span>
+          <span class="prof-toggle-label">Тёмная тема</span>
+          <label class="prof-toggle"><input type="checkbox" id="themeToggle" checked onchange="toggleTheme(this.checked)"><span class="prof-toggle-track"></span></label>
         </div>
       </div>
 
@@ -1145,6 +1171,36 @@ function defaultProfile(){
   return {xp:0,views:0,wishes:0,shares:0,reports:0,streak:1,lastVisit:new Date().toDateString(),invited:0,keywords:[],notif:{hot:true,priceDrop:true},interests:{games:true,clothes:true,market:true,travel:true,electronics:true},nightOwl:false,unlocked:[],proUntil:null};
 }
 function saveProfile(p){localStorage.setItem('dh_profile',JSON.stringify(p))}
+
+function toggleTheme(isDark){
+  if(isDark){
+    document.documentElement.classList.remove('light');
+    localStorage.setItem('dh_theme','dark');
+    document.querySelector('meta[name="theme-color"]').content='#0A0D1A';
+  } else {
+    document.documentElement.classList.add('light');
+    localStorage.setItem('dh_theme','light');
+    document.querySelector('meta[name="theme-color"]').content='#F5F3F7';
+  }
+  const icon=document.getElementById('themeIcon');
+  if(icon) icon.textContent=isDark?'🌙':'☀️';
+  const lbl=icon?.nextElementSibling;
+  if(lbl) lbl.textContent=isDark?'Тёмная тема':'Светлая тема';
+}
+
+function initTheme(){
+  const t=localStorage.getItem('dh_theme');
+  if(t==='light'){
+    document.documentElement.classList.add('light');
+    document.querySelector('meta[name="theme-color"]').content='#F5F3F7';
+    const tog=document.getElementById('themeToggle');
+    if(tog) tog.checked=false;
+    const icon=document.getElementById('themeIcon');
+    if(icon) icon.textContent='☀️';
+    const lbl=icon?.nextElementSibling;
+    if(lbl) lbl.textContent='Светлая тема';
+  }
+}
 function isPro(){const p=getProfile();if(!p.proUntil)return false;return new Date(p.proUntil)>new Date()}
 function activatePro(days){const p=getProfile();const until=new Date();until.setDate(until.getDate()+days);p.proUntil=until.toISOString();saveProfile(p);syncProStatus(true)}
 async function syncProStatus(isPro){if(!authUser)return;try{await sb.from('user_profiles').update({is_pro:isPro}).eq('id',authUser.id)}catch{}}
@@ -2433,6 +2489,7 @@ setInterval(updateTimer,1000);
 
 // ── Init ──
 async function init(){
+  initTheme();
   repairXP();
   renderCats();
   updateStreak();
