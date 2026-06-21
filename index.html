@@ -651,11 +651,12 @@ async function authTelegram(){
 
 sb.auth.getSession().then(({data:{session}})=>{
   authUser=session?.user||null;
-  if(authUser)loadAuthProfile(authUser.id).then(()=>loadProfileFromSupabase()).then(()=>updateProfileUI());
+  if(authUser)loadAuthProfile(authUser.id).then(()=>loadFromCloud()).then(()=>updateProfileUI());
+  else loadFromCloud().then(()=>updateProfileUI());
 });
 sb.auth.onAuthStateChange((_ev,session)=>{
   authUser=session?.user||null;
-  if(authUser)loadAuthProfile(authUser.id).then(()=>loadProfileFromSupabase()).then(()=>updateProfileUI());
+  if(authUser)loadAuthProfile(authUser.id).then(()=>loadFromCloud()).then(()=>{syncToCloud();updateProfileUI();});
   else{authProfile=null;updateProfileUI();}
 });
 
@@ -1125,7 +1126,7 @@ document.getElementById('searchInput').addEventListener('input',e=>{
 
 // ── Wishlist (localStorage) ──
 function getWishlist(){ try{return JSON.parse(localStorage.getItem('dh_wishlist')||'[]')}catch{return []} }
-function saveWishlist(list){ localStorage.setItem('dh_wishlist',JSON.stringify(list)) }
+function saveWishlist(list){ localStorage.setItem('dh_wishlist',JSON.stringify(list));debounceSyncCloud(); }
 function isInWishlist(id){ return getWishlist().includes(id) }
 function toggleWishlist(id){
   let list=getWishlist();
@@ -1192,43 +1193,75 @@ function defaultProfile(){
 }
 function saveProfile(p){
   localStorage.setItem('dh_profile',JSON.stringify(p));
-  debounceSyncProfile();
+  debounceSyncCloud();
 }
-let _syncTimer=null;
-function debounceSyncProfile(){
-  if(_syncTimer)clearTimeout(_syncTimer);
-  _syncTimer=setTimeout(syncProfileToSupabase,3000);
+let _cloudTimer=null;
+function debounceSyncCloud(){
+  if(_cloudTimer)clearTimeout(_cloudTimer);
+  _cloudTimer=setTimeout(syncToCloud,2000);
 }
-async function syncProfileToSupabase(){
-  if(!authUser)return;
+async function syncToCloud(){
+  const did=getDeviceId();
   const p=getProfile();
-  try{await sb.from('user_profiles').update({
-    xp:p.xp,views:p.views,wishes:p.wishes,shares:p.shares,reports:p.reports,
-    streak:p.streak,last_visit:p.lastVisit,invited:p.invited,
-    keywords:p.keywords,unlocked:p.unlocked,
-    interests:p.interests,night_owl:p.nightOwl,
-    pro_until:p.proUntil
-  }).eq('id',authUser.id)}catch{}
+  const data={
+    device_id:did,xp:p.xp||0,views:p.views||0,wishes:p.wishes||0,shares:p.shares||0,
+    reports:p.reports||0,streak:p.streak||1,last_visit:p.lastVisit||null,invited:p.invited||0,
+    keywords:p.keywords||[],unlocked:p.unlocked||[],interests:p.interests||{},
+    night_owl:p.nightOwl||false,pro_until:p.proUntil||null,redeemed_code:p.redeemedCode||null,
+    wishlist:getWishlist(),ref_code:localStorage.getItem('dh_refcode')||null,
+    price_alerts:getPriceAlerts(),auth_user_id:authUser?.id||null,
+    updated_at:new Date().toISOString()
+  };
+  try{await sbFetch(SB_URL+'/rest/v1/device_profiles',{method:'POST',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},body:JSON.stringify(data)});}catch{}
+  if(authUser){
+    try{await sbFetch(SB_URL+'/rest/v1/user_profiles?id=eq.'+authUser.id,{method:'PATCH',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({xp:p.xp||0,views:p.views||0,wishes:p.wishes||0,shares:p.shares||0,reports:p.reports||0,streak:p.streak||1,last_visit:p.lastVisit,invited:p.invited||0,keywords:p.keywords||[],unlocked:p.unlocked||[],interests:p.interests||{},night_owl:p.nightOwl||false,pro_until:p.proUntil})});}catch{}
+  }
 }
-async function loadProfileFromSupabase(){
-  if(!authUser)return;
+let _loadingCloud=false;
+async function loadFromCloud(){
+  if(_loadingCloud)return;
+  _loadingCloud=true;
+  const did=getDeviceId();
   try{
-    const{data}=await sb.from('user_profiles').select('xp,views,wishes,shares,reports,streak,last_visit,invited,keywords,unlocked,interests,night_owl,pro_until').eq('id',authUser.id).single();
-    if(!data||data.xp===null)return;
+    let r=await sbFetch(SB_URL+'/rest/v1/device_profiles?device_id=eq.'+did,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
+    let rows=await r.json();
+    if(!rows.length&&authUser){
+      r=await sbFetch(SB_URL+'/rest/v1/device_profiles?auth_user_id=eq.'+authUser.id+'&order=updated_at.desc&limit=1',{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
+      rows=await r.json();
+    }
+    if(!rows.length){_loadingCloud=false;return;}
+    const c=rows[0];
     const local=getProfile();
-    if((data.xp||0)>=(local.xp||0)){
-      local.xp=data.xp||0;local.views=data.views||0;local.wishes=data.wishes||0;
-      local.shares=data.shares||0;local.reports=data.reports||0;local.streak=data.streak||1;
-      local.lastVisit=data.last_visit||local.lastVisit;local.invited=data.invited||0;
-      if(data.keywords?.length)local.keywords=data.keywords;
-      if(data.unlocked?.length)local.unlocked=data.unlocked;
-      if(data.interests)local.interests=data.interests;
-      local.nightOwl=data.night_owl||false;
-      if(data.pro_until)local.proUntil=data.pro_until;
+    if((c.xp||0)>(local.xp||0)){
+      local.xp=c.xp||0;local.views=c.views||0;local.wishes=c.wishes||0;
+      local.shares=c.shares||0;local.reports=c.reports||0;local.streak=c.streak||1;
+      local.lastVisit=c.last_visit||local.lastVisit;local.invited=c.invited||0;
+      if(c.keywords?.length)local.keywords=c.keywords;
+      if(c.unlocked?.length)local.unlocked=c.unlocked;
+      if(c.interests&&Object.keys(c.interests).length)local.interests=c.interests;
+      local.nightOwl=c.night_owl||false;
+      if(c.pro_until)local.proUntil=c.pro_until;
+      if(c.redeemed_code)local.redeemedCode=c.redeemed_code;
       localStorage.setItem('dh_profile',JSON.stringify(local));
     }
+    const lw=getWishlist();
+    if(c.wishlist?.length){
+      const merged=[...new Set([...lw,...c.wishlist])];
+      localStorage.setItem('dh_wishlist',JSON.stringify(merged));
+    }
+    if(!localStorage.getItem('dh_refcode')&&c.ref_code){
+      localStorage.setItem('dh_refcode',c.ref_code);
+    }
+    if(!getPriceAlerts().length&&c.price_alerts?.length){
+      localStorage.setItem('dh_price_alerts',JSON.stringify(c.price_alerts));
+    }
   }catch{}
+  _loadingCloud=false;
 }
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden)syncToCloud();
+  else loadFromCloud().then(()=>updateProfileUI());
+});
 
 function toggleTheme(isDark){
   document.documentElement.classList.add('transitioning');
@@ -1273,7 +1306,7 @@ const FREE_ALERT_LIMIT=2;
 
 // ── Price Alerts (порог цены) ──
 function getPriceAlerts(){try{return JSON.parse(localStorage.getItem('dh_price_alerts')||'[]')}catch{return[]}}
-function savePriceAlerts(a){localStorage.setItem('dh_price_alerts',JSON.stringify(a))}
+function savePriceAlerts(a){localStorage.setItem('dh_price_alerts',JSON.stringify(a));debounceSyncCloud();}
 function addPriceAlert(dealId,targetPrice){
   let alerts=getPriceAlerts();
   if(!isPro()&&alerts.length>=FREE_ALERT_LIMIT){showProModal();return false}
