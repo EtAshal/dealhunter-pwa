@@ -1758,7 +1758,7 @@ async function inviteFriend(){
   renderInviteModal();
   overlay.classList.add('open');
   document.body.style.overflow='hidden';
-  getRefStats().then(s=>{invited=s.invited;earnedDays=s.earnedDays;const ei=document.getElementById('refInvited');const ee=document.getElementById('refEarned');if(ei)ei.textContent=invited;if(ee)ee.textContent=earnedDays;});
+  getRefStats().then(s=>{invited=s.invited;earnedDays=s.earnedDays;renderInviteModal();});
 }
 function shareRefCode(){
   const code=getRefCode();
