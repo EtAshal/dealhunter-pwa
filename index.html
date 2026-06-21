@@ -494,7 +494,7 @@ button{font-family:inherit}
         <div class="prof-invite-icon">🎁</div>
         <div class="prof-invite-body">
           <div class="prof-invite-title">Пригласи друга</div>
-          <div class="prof-invite-desc">Получите 7 дней PRO бесплатно вдвоём</div>
+          <div class="prof-invite-desc">Пригласи 3 друзей — получи 7 дней PRO</div>
         </div>
         <span class="prof-invite-arrow">›</span>
       </div>
@@ -1710,7 +1710,7 @@ async function inviteFriend(){
       <div style="text-align:center;padding:20px 0">
         <div style="font-size:48px;margin-bottom:12px">🎁</div>
         <div style="font-size:22px;font-weight:900;color:var(--text)">Делись Deal<span style="color:var(--accent)">Hunter</span></div>
-        <div style="font-size:14px;color:var(--text2);margin-top:8px;line-height:20px;padding:0 20px">Приглашай друзей — оба получите 7 дней PRO бесплатно за каждого!</div>
+        <div style="font-size:14px;color:var(--text2);margin-top:8px;line-height:20px;padding:0 20px">Приглашай друзей и получай бесплатные дни PRO!</div>
       </div>
       <div style="background:var(--card);border-radius:var(--r-lg);padding:20px;border:1px solid rgba(139,92,246,0.3);text-align:center;margin-bottom:12px">
         <div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:10px">Твой реферальный код</div>
@@ -1750,7 +1750,7 @@ async function inviteFriend(){
       </div>
       <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Как это работает</div>
       <div style="background:var(--card);border-radius:var(--r-lg);padding:16px;border:1px solid var(--border);display:flex;flex-direction:column;gap:14px">
-        ${[{s:'1',t:'Поделись своим кодом с друзьями'},{s:'2',t:'Друг скачивает DealHunter и вводит твой код'},{s:'3',t:'Пригласи 3 друзей — получи неделю PRO бесплатно!'}].map(x=>`<div style="display:flex;align-items:center;gap:12px"><div style="width:28px;height:28px;border-radius:14px;background:var(--accentGlow);border:1px solid rgba(139,92,246,0.4);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:var(--accent);flex-shrink:0">${x.s}</div><div style="font-size:14px;color:var(--text2);line-height:19px">${x.t}</div></div>`).join('')}
+        ${[{s:'1',t:'Поделись своим кодом с друзьями'},{s:'2',t:'Друг скачивает DealHunter и вводит твой код'},{s:'3',t:'3 друга = 7 дней PRO, 10 друзей = 14 дней PRO!'}].map(x=>`<div style="display:flex;align-items:center;gap:12px"><div style="width:28px;height:28px;border-radius:14px;background:var(--accentGlow);border:1px solid rgba(139,92,246,0.4);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:var(--accent);flex-shrink:0">${x.s}</div><div style="font-size:14px;color:var(--text2);line-height:19px">${x.t}</div></div>`).join('')}
       </div>
     </div>`;
   overlay.classList.add('open');
@@ -1758,7 +1758,7 @@ async function inviteFriend(){
 }
 function shareRefCode(){
   const code=getRefCode();
-  const text=`Скачай DealHunter — лучшие скидки России! Введи мой код ${code} и получи 7 дней PRO бесплатно 🎁`;
+  const text=`Скачай DealHunter — лучшие скидки России! Введи мой код ${code} и получи бонус 🎁`;
   const url='https://pwa.dealhunterapp.online';
   if(navigator.share){navigator.share({title:'DealHunter',text,url}).then(()=>trackInvite()).catch(()=>{});}
   else{navigator.clipboard.writeText(text+' '+url).then(()=>{trackInvite();alert('Ссылка скопирована!');});}
@@ -1785,9 +1785,8 @@ async function redeemRefCode(){
   }catch(e){alert('Ошибка сети. Попробуйте позже.');return;}
   p.redeemedCode=code;
   saveProfile(p);
-  activatePro(7);
   addXP(20,'Код друга активирован');
-  alert('🎉 Код активирован! Вам начислено 7 дней PRO бесплатно.');
+  alert('🎉 Код активирован! +20 XP');
   inviteFriend();
 }
 
