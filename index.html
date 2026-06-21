@@ -1063,7 +1063,9 @@ function renderHome(){
   html+=dealOfTheDayHTML(deals);
 
   // Hot deals
-  const hot=deals.filter(d=>d.discount>=50||d.is_free).slice(0,12);
+  const hotAll=deals.filter(d=>d.discount>=50||d.is_free);
+  for(let i=hotAll.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[hotAll[i],hotAll[j]]=[hotAll[j],hotAll[i]];}
+  const hot=hotAll.slice(0,12);
   if(hot.length){
     html+=`<div class="section"><div class="section-header"><div class="section-title-row"><span class="section-title">🔥 Горящие скидки</span></div><span class="see-all" onclick="showHotDeals()">Все</span></div><div class="scroll-row">${hot.map(d=>cardHTML(d)).join('')}</div></div>`;
   }
@@ -1102,7 +1104,8 @@ function showHotDeals(){
   document.getElementById('searchScreen').classList.add('active');
   document.getElementById('wishlistScreen').classList.remove('active');
   document.getElementById('profileScreen').classList.remove('active');
-  const hot=allDeals.filter(d=>d.discount>=50||d.is_free).sort((a,b)=>(b.discount||0)-(a.discount||0));
+  const hot=allDeals.filter(d=>d.discount>=50||d.is_free);
+  for(let i=hot.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[hot[i],hot[j]]=[hot[j],hot[i]];}
   document.getElementById('searchInput').value='';
   document.getElementById('searchResults').innerHTML=`<div style="padding:0 4px 8px;font-size:15px;font-weight:800;color:var(--text)">🔥 Горящие скидки (${hot.length})</div>`+hot.map(d=>cardHTML(d,'')).join('');
 }
