@@ -1857,7 +1857,7 @@ function showProModal(){
         </div>`).join('')}
       </div>
       <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px">
-        ${PLANS.map(plan=>`<div onclick="localStorage.setItem('dh_pro_plan','${plan.id}');renderProContent()" class="pro-plan" data-id="${plan.id}" style="display:flex;align-items:center;padding:16px;background:${selectedPlan===plan.id?'rgba(139,92,246,0.05)':'var(--card)'};border-radius:var(--r-lg);border:2px solid ${selectedPlan===plan.id?'var(--accent)':'var(--border)'};cursor:pointer;position:relative">
+        ${PLANS.map(plan=>`<div onclick="localStorage.setItem('dh_pro_plan','${plan.id}');showProModal()" class="pro-plan" data-id="${plan.id}" style="display:flex;align-items:center;padding:16px;background:${selectedPlan===plan.id?'rgba(139,92,246,0.05)':'var(--card)'};border-radius:var(--r-lg);border:2px solid ${selectedPlan===plan.id?'var(--accent)':'var(--border)'};cursor:pointer;position:relative">
           ${plan.popular?'<div style="position:absolute;top:-10px;right:16px;background:var(--accent);padding:3px 10px;border-radius:8px;font-size:11px;font-weight:800;color:#fff">Выгодно</div>':''}
           ${plan.save?`<div style="position:absolute;top:-10px;left:16px;background:#06D6A0;padding:3px 8px;border-radius:8px;font-size:11px;font-weight:800;color:#fff">${plan.save}</div>`:''}
           <div style="width:22px;height:22px;border-radius:11px;border:2px solid ${selectedPlan===plan.id?'var(--accent)':'var(--muted)'};display:flex;align-items:center;justify-content:center;margin-right:14px">${selectedPlan===plan.id?'<div style="width:12px;height:12px;border-radius:6px;background:var(--accent)"></div>':''}</div>
