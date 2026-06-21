@@ -1065,7 +1065,7 @@ function renderHome(){
   // Hot deals
   const hot=deals.filter(d=>d.discount>=50||d.is_free).slice(0,12);
   if(hot.length){
-    html+=`<div class="section"><div class="section-header"><div class="section-title-row"><span class="section-title">🔥 Горящие скидки</span></div><span class="see-all">Все</span></div><div class="scroll-row">${hot.map(d=>cardHTML(d)).join('')}</div></div>`;
+    html+=`<div class="section"><div class="section-header"><div class="section-title-row"><span class="section-title">🔥 Горящие скидки</span></div><span class="see-all" onclick="showHotDeals()">Все</span></div><div class="scroll-row">${hot.map(d=>cardHTML(d)).join('')}</div></div>`;
   }
 
   // Promo codes
@@ -1094,6 +1094,18 @@ function renderHome(){
 
 // ── Search ──
 let searchTimer2;
+function showHotDeals(){
+  activeTab='search';
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelector('.tab[data-tab="search"]').classList.add('active');
+  document.getElementById('homeScreen').style.display='none';
+  document.getElementById('searchScreen').classList.add('active');
+  document.getElementById('wishlistScreen').classList.remove('active');
+  document.getElementById('profileScreen').classList.remove('active');
+  const hot=allDeals.filter(d=>d.discount>=50||d.is_free).sort((a,b)=>(b.discount||0)-(a.discount||0));
+  document.getElementById('searchInput').value='';
+  document.getElementById('searchResults').innerHTML=`<div style="padding:0 4px 8px;font-size:15px;font-weight:800;color:var(--text)">🔥 Горящие скидки (${hot.length})</div>`+hot.map(d=>cardHTML(d,'')).join('');
+}
 document.getElementById('searchInput').addEventListener('input',e=>{
   clearTimeout(searchTimer2);
   searchTimer2=setTimeout(()=>{
