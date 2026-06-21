@@ -26,6 +26,7 @@
   --catTravel:#F59E0B;--catTech:#38BDF8;
   --r-sm:8px;--r-md:12px;--r-lg:16px;--r-xl:24px;--r-pill:100px;
 }
+html.transitioning,html.transitioning *,html.transitioning *::before,html.transitioning *::after{transition:background-color .4s ease, color .3s ease, border-color .3s ease, box-shadow .3s ease !important}
 html.light{
   --bg:#F5F3F7;--card:#FFFFFF;--card2:#F0EDF4;--tag:#EDE5F7;
   --accent:#9333EA;--accentDim:#7C3AED;--accentGlow:rgba(147,51,234,0.1);
@@ -204,7 +205,7 @@ button{font-family:inherit}
 .promo-card-cta{display:block;text-align:center;background:var(--accent);color:#fff;border-radius:var(--r-md);padding:8px;font-size:13px;font-weight:700;margin-top:10px}
 
 /* ── Bottom Tabs ── */
-.tab-bar{display:flex;background:#0A0D1A;padding:6px 0 env(safe-area-inset-bottom,0px);position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;z-index:100}
+.tab-bar{display:flex;background:var(--bg);padding:6px 0 calc(env(safe-area-inset-bottom,0px) + 5px);position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;z-index:100}
 .tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;padding:4px 0;cursor:pointer;color:var(--muted);transition:.2s;-webkit-tap-highlight-color:transparent}
 .tab.active{color:var(--accent)}
 .tab-icon{font-size:20px;line-height:1}
@@ -1173,6 +1174,7 @@ function defaultProfile(){
 function saveProfile(p){localStorage.setItem('dh_profile',JSON.stringify(p))}
 
 function toggleTheme(isDark){
+  document.documentElement.classList.add('transitioning');
   if(isDark){
     document.documentElement.classList.remove('light');
     localStorage.setItem('dh_theme','dark');
@@ -1186,6 +1188,7 @@ function toggleTheme(isDark){
   if(icon) icon.textContent=isDark?'🌙':'☀️';
   const lbl=icon?.nextElementSibling;
   if(lbl) lbl.textContent=isDark?'Тёмная тема':'Светлая тема';
+  setTimeout(()=>document.documentElement.classList.remove('transitioning'),500);
 }
 
 function initTheme(){
