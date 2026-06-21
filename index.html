@@ -1839,6 +1839,7 @@ function showProModal(){
   ];
 
   function renderProContent(){
+    selectedPlan=localStorage.getItem('dh_pro_plan')||'pro-year';
     modal.innerHTML=`
     <div style="position:sticky;top:0;z-index:10;background:var(--bg);padding:12px 16px;padding-top:max(12px,env(safe-area-inset-top))">
       <div class="detail-back-btn" style="position:static;background:rgba(255,255,255,0.08);color:var(--text)" onclick="closeDeal()"><svg width="20" height="20" viewBox="0 0 512 512" fill="none" stroke="currentColor" stroke-width="48" stroke-linecap="round" stroke-linejoin="round"><line x1="368" y1="368" x2="144" y2="144"/><line x1="368" y1="144" x2="144" y2="368"/></svg></div>
@@ -1856,7 +1857,7 @@ function showProModal(){
         </div>`).join('')}
       </div>
       <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px">
-        ${PLANS.map(plan=>`<div onclick="document.querySelectorAll('.pro-plan').forEach(e=>e.style.cssText=e.dataset.id==='${plan.id}'?'border-color:var(--accent);background:rgba(139,92,246,0.05)':'border-color:var(--border);background:var(--card)');localStorage.setItem('dh_pro_plan','${plan.id}')" class="pro-plan" data-id="${plan.id}" style="display:flex;align-items:center;padding:16px;background:${selectedPlan===plan.id?'rgba(139,92,246,0.05)':'var(--card)'};border-radius:var(--r-lg);border:2px solid ${selectedPlan===plan.id?'var(--accent)':'var(--border)'};cursor:pointer;position:relative">
+        ${PLANS.map(plan=>`<div onclick="localStorage.setItem('dh_pro_plan','${plan.id}');renderProContent()" class="pro-plan" data-id="${plan.id}" style="display:flex;align-items:center;padding:16px;background:${selectedPlan===plan.id?'rgba(139,92,246,0.05)':'var(--card)'};border-radius:var(--r-lg);border:2px solid ${selectedPlan===plan.id?'var(--accent)':'var(--border)'};cursor:pointer;position:relative">
           ${plan.popular?'<div style="position:absolute;top:-10px;right:16px;background:var(--accent);padding:3px 10px;border-radius:8px;font-size:11px;font-weight:800;color:#fff">Выгодно</div>':''}
           ${plan.save?`<div style="position:absolute;top:-10px;left:16px;background:#06D6A0;padding:3px 8px;border-radius:8px;font-size:11px;font-weight:800;color:#fff">${plan.save}</div>`:''}
           <div style="width:22px;height:22px;border-radius:11px;border:2px solid ${selectedPlan===plan.id?'var(--accent)':'var(--muted)'};display:flex;align-items:center;justify-content:center;margin-right:14px">${selectedPlan===plan.id?'<div style="width:12px;height:12px;border-radius:6px;background:var(--accent)"></div>':''}</div>
@@ -1877,7 +1878,7 @@ function showProModal(){
 const PAY_API = 'https://ultiyskadbkrdenzxyym.supabase.co/functions/v1';
 
 async function handleProPurchase(){
-  const plan=localStorage.getItem('dh_pro_plan')||'pro-3month';
+  const plan=localStorage.getItem('dh_pro_plan')||'pro-year';
   const btn=document.querySelector('#proBuyBtn');
   if(btn){btn.disabled=true;btn.textContent='⏳ Создаём платёж...';}
 
@@ -1888,7 +1889,7 @@ async function handleProPurchase(){
     const res = await fetch(`${PAY_API}/create-payment`, {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({plan, user_id:userId, return_url:window.location.origin+'/?pro=success'}),
+      body:JSON.stringify({plan, user_id:userId, return_url:'https://pwa.dealhunterapp.online/?pro=success'}),
     });
 
     const data = await res.json();
