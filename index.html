@@ -1673,9 +1673,13 @@ function showAchievementsModal(){
 async function sbFetch(url,opts={},retries=3){
   for(let i=0;i<retries;i++){
     try{
-      const r=await fetch(url,opts);
+      const ctrl=new AbortController();
+      const tid=setTimeout(()=>ctrl.abort(),8000);
+      const r=await fetch(url,{...opts,signal:ctrl.signal});
+      clearTimeout(tid);
       if(r.ok||r.status===409) return r;
-      if(i<retries-1) await new Promise(r=>setTimeout(r,1000*(i+1)));
+      if(i===retries-1) throw new Error('HTTP '+r.status);
+      await new Promise(r=>setTimeout(r,1000*(i+1)));
     }catch(e){
       if(i===retries-1) throw e;
       await new Promise(r=>setTimeout(r,1000*(i+1)));
