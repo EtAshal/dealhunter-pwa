@@ -1832,10 +1832,11 @@ function showProModal(){
     {icon:'🚫',color:'#60A5FA',title:'Без рекламы',desc:'Чистый интерфейс без баннеров'},
     {icon:'🎖️',color:'#FBBF24',title:'Бейдж PRO',desc:'Статус в ленте «Покупают сейчас»'},
   ];
-  let selectedPlan=localStorage.getItem('dh_pro_plan')||'yearly';
+  let selectedPlan=localStorage.getItem('dh_pro_plan')||'pro-3month';
   const PLANS=[
-    {id:'monthly',label:'1 месяц',price:'249 ₽',per:'/мес',popular:false},
-    {id:'yearly',label:'12 месяцев',price:'169 ₽',per:'/мес',total:'2 028 ₽/год',popular:true,save:'-32%'},
+    {id:'pro-month',label:'1 месяц',price:'99 ₽',per:'/мес',popular:false},
+    {id:'pro-3month',label:'3 месяца',price:'83 ₽',per:'/мес',total:'249 ₽',popular:true,save:'-16%'},
+    {id:'pro-year',label:'12 месяцев',price:'67 ₽',per:'/мес',total:'799 ₽/год',popular:false,save:'-32%'},
   ];
 
   function renderProContent(){
@@ -1864,8 +1865,8 @@ function showProModal(){
           <div style="text-align:right"><div style="font-size:20px;font-weight:800;color:var(--text)">${plan.price}</div><div style="font-size:12px;color:var(--muted)">${plan.per}</div></div>
         </div>`).join('')}
       </div>
-      ${isPro()?`<div style="background:#06D6A022;border:2px solid #06D6A0;border-radius:var(--r-lg);padding:17px;text-align:center;margin-bottom:12px"><div style="font-size:17px;font-weight:800;color:#06D6A0">✓ PRO активен</div><div style="font-size:13px;color:var(--text2);margin-top:4px">Осталось ${Math.max(0,Math.ceil((new Date(getProfile().proUntil)-new Date())/(1000*60*60*24)))} дней</div></div>`:`<button onclick="handleProPurchase()" style="display:flex;align-items:center;justify-content:center;gap:10px;background:var(--accent);color:#fff;border:none;border-radius:var(--r-lg);padding:17px;font-size:17px;font-weight:800;cursor:pointer;width:100%;margin-bottom:12px">💎 Оформить PRO</button>`}
-      <div style="color:var(--muted);font-size:11px;text-align:center;line-height:16px;padding:0 16px">${isPro()?'Спасибо за поддержку! Все PRO-функции активны.':'Подписка продлевается автоматически. Отменить можно в любой момент в настройках App Store / Google Play.'}</div>
+      ${isPro()?`<div style="background:#06D6A022;border:2px solid #06D6A0;border-radius:var(--r-lg);padding:17px;text-align:center;margin-bottom:12px"><div style="font-size:17px;font-weight:800;color:#06D6A0">✓ PRO активен</div><div style="font-size:13px;color:var(--text2);margin-top:4px">Осталось ${Math.max(0,Math.ceil((new Date(getProfile().proUntil)-new Date())/(1000*60*60*24)))} дней</div></div>`:`<button id="proBuyBtn" onclick="handleProPurchase()" style="display:flex;align-items:center;justify-content:center;gap:10px;background:var(--accent);color:#fff;border:none;border-radius:var(--r-lg);padding:17px;font-size:17px;font-weight:800;cursor:pointer;width:100%;margin-bottom:12px">💎 Оформить PRO</button>`}
+      <div style="color:var(--muted);font-size:11px;text-align:center;line-height:16px;padding:0 16px">${isPro()?'Спасибо за поддержку! Все PRO-функции активны.':'Безопасная оплата через ЮKassa. Одноразовый платёж, без автопродления.'}</div>
     </div>`;
   }
 
@@ -1874,14 +1875,31 @@ function showProModal(){
   document.body.style.overflow='hidden';
 }
 
-function handleProPurchase(){
-  const plan=localStorage.getItem('dh_pro_plan')||'yearly';
-  const price=plan==='yearly'?'2 028 ₽/год (169 ₽/мес)':'249 ₽/мес';
-  if(confirm(`Оформить PRO за ${price}?\n\nОплата будет доступна после подключения платёжной системы. Сейчас вы можете активировать пробный период на 7 дней бесплатно.`)){
-    activatePro(7);
-    alert('🎉 PRO активирован на 7 дней!\n\nВам доступны:\n• Полная история цен за 90 дней\n• Безлимитный список желаний\n• Безлимитные ключевые слова\n• Без рекламы');
-    closeDeal();
-    updateProfileUI();
+const PAY_API = 'https://dealhunterapp.online/pay';
+
+async function handleProPurchase(){
+  const plan=localStorage.getItem('dh_pro_plan')||'pro-3month';
+  const btn=document.querySelector('#proBuyBtn');
+  if(btn){btn.disabled=true;btn.textContent='⏳ Создаём платёж...';}
+
+  try {
+    const userId = localStorage.getItem('dh_device_id') || authUser?.id;
+    if(!userId){alert('Ошибка: не удалось определить пользователя');return;}
+
+    const res = await fetch(`${PAY_API}/create`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({plan, user_id:userId, return_url:window.location.origin+'/?pro=success'}),
+    });
+
+    const data = await res.json();
+    if(!res.ok) throw new Error(data.error||'Ошибка платежа');
+
+    window.location.href = data.confirmation_url;
+  } catch(e) {
+    console.error('Payment error:', e);
+    alert('Не удалось создать платёж: '+e.message);
+    if(btn){btn.disabled=false;btn.textContent='💎 Оформить PRO';}
   }
 }
 
@@ -2506,11 +2524,16 @@ async function init(){
     checkAchievements();
     checkExpiredAlerts();
     ensureRefCodeRegistered();
-    const sharedDealId=new URLSearchParams(location.search).get('deal');
+    const params=new URLSearchParams(location.search);
+    const sharedDealId=params.get('deal');
     if(sharedDealId){
       const found=allDeals.find(x=>x.id===sharedDealId);
       if(found){openDeal(sharedDealId);}
       else{showXPToast(0,'Скидка устарела — смотри другие!');}
+      history.replaceState(null,'',location.pathname);
+    }
+    if(params.get('pro')==='success'){
+      showXPToast(0,'🎉 Оплата прошла! PRO активируется в течение минуты.');
       history.replaceState(null,'',location.pathname);
     }
   }catch(err){
