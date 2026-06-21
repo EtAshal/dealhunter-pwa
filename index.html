@@ -1684,9 +1684,9 @@ async function getRefStats(){
   const code=getRefCode();
   let invited=0;
   try{
-    const r=await fetch(SB_URL+'/rest/v1/referrals?code=eq.'+encodeURIComponent(code)+'&select=redeemed_count',{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
+    const r=await fetch(SB_URL+'/rest/v1/referral_uses?code=eq.'+encodeURIComponent(code)+'&select=id',{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
     const d=await r.json();
-    if(d.length) invited=d[0].redeemed_count||0;
+    invited=d.length||0;
   }catch{}
   let earnedDays=0;
   if(invited>=3) earnedDays+=7;
