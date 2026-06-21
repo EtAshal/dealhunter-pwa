@@ -1,4 +1,4 @@
-const CACHE = 'dh-v59';
+const CACHE = 'dh-v60';
 
 self.addEventListener('install', e => {
   self.skipWaiting();

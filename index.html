@@ -1832,11 +1832,10 @@ function showProModal(){
     {icon:'🚫',color:'#60A5FA',title:'Без рекламы',desc:'Чистый интерфейс без баннеров'},
     {icon:'🎖️',color:'#FBBF24',title:'Бейдж PRO',desc:'Статус в ленте «Покупают сейчас»'},
   ];
-  let selectedPlan=localStorage.getItem('dh_pro_plan')||'pro-3month';
+  let selectedPlan=localStorage.getItem('dh_pro_plan')||'pro-year';
   const PLANS=[
-    {id:'pro-month',label:'1 месяц',price:'99 ₽',per:'/мес',popular:false},
-    {id:'pro-3month',label:'3 месяца',price:'83 ₽',per:'/мес',total:'249 ₽',popular:true,save:'-16%'},
-    {id:'pro-year',label:'12 месяцев',price:'67 ₽',per:'/мес',total:'799 ₽/год',popular:false,save:'-32%'},
+    {id:'pro-month',label:'1 месяц',price:'249 ₽',per:'/мес',popular:false},
+    {id:'pro-year',label:'12 месяцев',price:'169 ₽',per:'/мес',total:'2 028 ₽/год',popular:true,save:'-32%'},
   ];
 
   function renderProContent(){
