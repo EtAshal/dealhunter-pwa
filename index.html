@@ -1895,7 +1895,8 @@ async function handleProPurchase(){
     const data = await res.json();
     if(!res.ok) throw new Error(data.error||'Ошибка платежа');
 
-    window.location.href = data.confirmation_url;
+    window.open(data.confirmation_url, '_blank');
+    if(btn){btn.disabled=false;btn.textContent='💎 Оформить PRO';}
   } catch(e) {
     console.error('Payment error:', e);
     alert('Не удалось создать платёж: '+e.message);
