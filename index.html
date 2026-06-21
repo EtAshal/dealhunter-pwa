@@ -1786,7 +1786,7 @@ async function redeemRefCode(){
     const ins=await fetch(SB_URL+'/rest/v1/referral_uses',{method:'POST',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({code,redeemer_id:deviceId})});
     if(!ins.ok){alert('Ошибка активации. Попробуйте позже.');return;}
     await fetch(SB_URL+'/rest/v1/referrals?code=eq.'+encodeURIComponent(code),{method:'PATCH',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({redeemed_count:refs[0].redeemed_count+1})});
-  }catch(e){alert('Ошибка сети. Попробуйте позже.');return;}
+  }catch(e){alert('Ошибка: '+e.message);return;}
   p.redeemedCode=code;
   saveProfile(p);
   addXP(20,'Код друга активирован');
