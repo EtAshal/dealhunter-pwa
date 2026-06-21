@@ -1712,6 +1712,19 @@ async function ensureRefCodeRegistered(){
     const d=await r.json();
     if(!d.length) await registerRefCode(code);
   }catch{}
+  retryPendingRedeem();
+}
+async function retryPendingRedeem(){
+  const pending=localStorage.getItem('dh_pending_redeem');
+  if(!pending) return;
+  const {code,deviceId}=JSON.parse(pending);
+  try{
+    const used=await sbFetch(SB_URL+'/rest/v1/referral_uses?redeemer_id=eq.'+deviceId+'&select=code',{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
+    const usedData=await used.json();
+    if(usedData.length){localStorage.removeItem('dh_pending_redeem');return;}
+    const ins=await sbFetch(SB_URL+'/rest/v1/referral_uses',{method:'POST',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify({code,redeemer_id:deviceId})});
+    if(ins.ok){const d=await ins.json();if(d.length) localStorage.removeItem('dh_pending_redeem');}
+  }catch{}
 }
 async function getRefStats(){
   const code=getRefCode();
@@ -1819,16 +1832,33 @@ async function redeemRefCode(){
     const refs=await chk.json();
     if(!refs.length){alert('Код не найден. Проверьте правильность.');return;}
     if(refs[0].owner_id===deviceId){alert('Нельзя использовать свой код');return;}
-    const used=await sbFetch(SB_URL+'/rest/v1/referral_uses?redeemer_id=eq.'+deviceId,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
+    const used=await sbFetch(SB_URL+'/rest/v1/referral_uses?redeemer_id=eq.'+deviceId+'&select=code',{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
     const usedData=await used.json();
-    if(usedData.length){p.redeemedCode=code;saveProfile(p);alert('Вы уже активировали реферальный код');return;}
+    if(usedData.length){p.redeemedCode=usedData[0].code;saveProfile(p);alert('Вы уже активировали реферальный код');inviteFriend();return;}
     const ins=await sbFetch(SB_URL+'/rest/v1/referral_uses',{method:'POST',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify({code,redeemer_id:deviceId})});
-    if(!ins.ok){const t=await ins.text();alert('Ошибка активации. Попробуйте позже.');return;}
+    if(!ins||!ins.ok){
+      localStorage.setItem('dh_pending_redeem',JSON.stringify({code,deviceId}));
+      p.redeemedCode=code;saveProfile(p);
+      addXP(20,'Код друга активирован');
+      alert('🎉 Код принят! Синхронизация завершится позже.');
+      inviteFriend();return;
+    }
     const inserted=await ins.json();
-    if(!inserted.length){alert('Ошибка сохранения. Попробуйте ещё раз.');return;}
-    await sbFetch(SB_URL+'/rest/v1/referrals?code=eq.'+encodeURIComponent(code),{method:'PATCH',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({redeemed_count:refs[0].redeemed_count+1})}).catch(()=>{});
-  }catch(e){alert('Ошибка сети. Проверьте интернет и попробуйте снова.');return;}
-  finally{if(btn){btn.disabled=false;btn.textContent='Активировать';}}
+    if(!inserted.length){
+      localStorage.setItem('dh_pending_redeem',JSON.stringify({code,deviceId}));
+      p.redeemedCode=code;saveProfile(p);
+      addXP(20,'Код друга активирован');
+      alert('🎉 Код принят! Синхронизация завершится позже.');
+      inviteFriend();return;
+    }
+    sbFetch(SB_URL+'/rest/v1/referrals?code=eq.'+encodeURIComponent(code),{method:'PATCH',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({redeemed_count:refs[0].redeemed_count+1})}).catch(()=>{});
+  }catch(e){
+    localStorage.setItem('dh_pending_redeem',JSON.stringify({code,deviceId}));
+    p.redeemedCode=code;saveProfile(p);
+    addXP(20,'Код друга активирован');
+    alert('🎉 Код принят! Синхронизация завершится позже.');
+    inviteFriend();return;
+  }finally{if(btn){btn.disabled=false;btn.textContent='Активировать';}}
   p.redeemedCode=code;
   saveProfile(p);
   addXP(20,'Код друга активирован');
