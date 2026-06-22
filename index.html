@@ -403,6 +403,10 @@ button{font-family:inherit}
       <span class="search-icon"><svg width="16" height="16" viewBox="0 0 512 512" fill="none" stroke="currentColor" stroke-width="40" stroke-linecap="round"><circle cx="221" cy="221" r="150"/><line x1="332" y1="332" x2="464" y2="464"/></svg></span>
       <input class="search-input" id="searchInput" type="text" placeholder="Найти скидку..." autocomplete="off">
     </div>
+    <div style="display:flex;gap:8px;padding:0 16px 12px">
+      <input id="priceMin" type="number" placeholder="Цена от" min="0" style="flex:1;background:var(--card2);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 12px;color:var(--text);font-size:13px;outline:none;-moz-appearance:textfield" oninput="triggerSearch()">
+      <input id="priceMax" type="number" placeholder="Цена до" min="0" style="flex:1;background:var(--card2);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 12px;color:var(--text);font-size:13px;outline:none;-moz-appearance:textfield" oninput="triggerSearch()">
+    </div>
     <div class="search-results" id="searchResults">
       <div class="search-hint">Введите название товара, игры или магазина</div>
     </div>
@@ -1112,14 +1116,20 @@ function showHotDeals(){
   document.getElementById('searchInput').value='';
   document.getElementById('searchResults').innerHTML=`<div style="padding:0 4px 8px;font-size:15px;font-weight:800;color:var(--text)">🔥 Горящие скидки (${hot.length})</div>`+hot.map(d=>cardHTML(d,'')).join('');
 }
+function triggerSearch(){document.getElementById('searchInput').dispatchEvent(new Event('input'));}
 document.getElementById('searchInput').addEventListener('input',e=>{
   clearTimeout(searchTimer2);
   searchTimer2=setTimeout(()=>{
     const q=e.target.value.trim().toLowerCase();
+    const pMin=parseFloat(document.getElementById('priceMin').value)||0;
+    const pMax=parseFloat(document.getElementById('priceMax').value)||Infinity;
     const results=document.getElementById('searchResults');
-    if(!q){results.innerHTML='<div class="search-hint">Введите название товара, игры или магазина</div>';return;}
-    const found=allDeals.filter(d=>(d.title||'').toLowerCase().includes(q)||(d.subtitle||'').toLowerCase().includes(q)||(d.store_id||'').toLowerCase().includes(q));
-    if(!found.length){results.innerHTML='<div class="search-hint">Ничего не найдено по запросу «'+q+'»</div>';return;}
+    if(!q&&!pMin&&pMax===Infinity){results.innerHTML='<div class="search-hint">Введите название товара, игры или магазина</div>';return;}
+    let found=allDeals;
+    if(q) found=found.filter(d=>(d.title||'').toLowerCase().includes(q)||(d.subtitle||'').toLowerCase().includes(q)||(d.store_id||'').toLowerCase().includes(q));
+    if(pMin) found=found.filter(d=>(d.price_current||0)>=pMin);
+    if(pMax!==Infinity) found=found.filter(d=>(d.price_current||0)<=pMax);
+    if(!found.length){results.innerHTML='<div class="search-hint">Ничего не найдено</div>';return;}
     results.innerHTML=found.slice(0,30).map(d=>cardHTML(d,'')).join('');
   },300);
 });
