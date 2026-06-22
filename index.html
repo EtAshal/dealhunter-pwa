@@ -1887,7 +1887,7 @@ async function redeemRefCode(){
       localStorage.setItem('dh_pending_redeem',JSON.stringify({code,deviceId}));
       p.redeemedCode=code;saveProfile(p);
       addXP(20,'Код друга активирован');
-      alert('🎉 Код принят! Синхронизация завершится позже.');
+      alert('🎉 Код принят! У друга засчитается в течение минуты.');
       inviteFriend();return;
     }
     const inserted=await ins.json();
@@ -1895,7 +1895,7 @@ async function redeemRefCode(){
       localStorage.setItem('dh_pending_redeem',JSON.stringify({code,deviceId}));
       p.redeemedCode=code;saveProfile(p);
       addXP(20,'Код друга активирован');
-      alert('🎉 Код принят! Синхронизация завершится позже.');
+      alert('🎉 Код принят! У друга засчитается в течение минуты.');
       inviteFriend();return;
     }
     sbFetch(SB_URL+'/rest/v1/referrals?code=eq.'+encodeURIComponent(code),{method:'PATCH',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({redeemed_count:refs[0].redeemed_count+1})}).catch(()=>{});
@@ -1909,7 +1909,7 @@ async function redeemRefCode(){
   p.redeemedCode=code;
   saveProfile(p);
   addXP(20,'Код друга активирован');
-  alert('🎉 Код активирован! +20 XP');
+  alert('🎉 Код активирован! +20 XP\n\nУ друга засчитается в течение минуты');
   inviteFriend();
 }
 
