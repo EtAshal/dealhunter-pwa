@@ -403,9 +403,9 @@ button{font-family:inherit}
       <span class="search-icon"><svg width="16" height="16" viewBox="0 0 512 512" fill="none" stroke="currentColor" stroke-width="40" stroke-linecap="round"><circle cx="221" cy="221" r="150"/><line x1="332" y1="332" x2="464" y2="464"/></svg></span>
       <input class="search-input" id="searchInput" type="text" placeholder="Найти скидку..." autocomplete="off">
     </div>
-    <div style="display:flex;gap:8px;padding:0 16px 12px">
-      <input id="priceMin" type="number" placeholder="Цена от" min="0" style="flex:1;background:var(--card2);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 12px;color:var(--text);font-size:13px;outline:none;-moz-appearance:textfield" oninput="triggerSearch()">
-      <input id="priceMax" type="number" placeholder="Цена до" min="0" style="flex:1;background:var(--card2);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 12px;color:var(--text);font-size:13px;outline:none;-moz-appearance:textfield" oninput="triggerSearch()">
+    <div style="display:flex;gap:8px;margin:0 16px 12px">
+      <input id="priceMin" type="number" placeholder="Цена от" min="0" style="flex:1;min-width:0;background:var(--card2);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 12px;color:var(--text);font-size:13px;outline:none;-moz-appearance:textfield;-webkit-appearance:none" oninput="triggerSearch()">
+      <input id="priceMax" type="number" placeholder="Цена до" min="0" style="flex:1;min-width:0;background:var(--card2);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 12px;color:var(--text);font-size:13px;outline:none;-moz-appearance:textfield;-webkit-appearance:none" oninput="triggerSearch()">
     </div>
     <div class="search-results" id="searchResults">
       <div class="search-hint">Введите название товара, игры или магазина</div>
