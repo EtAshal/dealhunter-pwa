@@ -1670,7 +1670,7 @@ function showHunterProfile(){
       <div style="background:var(--card);border-radius:var(--r-lg);padding:16px;border:2px solid var(--accent);margin-bottom:16px">
         <div style="display:flex;align-items:center;gap:12px">
           <div style="width:60px;height:60px;border-radius:30px;background:var(--accentGlow);display:flex;align-items:center;justify-content:center;font-size:32px;border:2px solid var(--accent)">${rank.emoji}</div>
-          <div style="flex:1"><div style="font-size:20px;font-weight:900;color:var(--accent)">${authProfile?.display_name||p.userName||rank.name} <span style="background:linear-gradient(135deg,#8B5CF6,#A78BFA);color:#fff;font-size:11px;font-weight:800;padding:2px 8px;border-radius:10px;vertical-align:middle;margin-left:4px">💎 PRO</span></div><div style="font-size:13px;color:var(--text2);margin-top:2px">Уровень ${lvl}</div></div>
+          <div style="flex:1"><div style="font-size:20px;font-weight:900;color:var(--accent)">${authProfile?.display_name||p.userName||rank.name}${isPro()?' <span style="background:linear-gradient(135deg,#8B5CF6,#A78BFA);color:#fff;font-size:11px;font-weight:800;padding:2px 8px;border-radius:10px;vertical-align:middle;margin-left:4px">💎 PRO</span>':''}</div><div style="font-size:13px;color:var(--text2);margin-top:2px">Уровень ${lvl}</div></div>
           <div style="background:var(--accent);color:#fff;border-radius:20px;padding:6px 14px;font-size:14px;font-weight:800">${p.xp} XP</div>
         </div>
         <div style="height:4px;background:var(--border);border-radius:2px;margin-top:12px;overflow:hidden"><div style="height:100%;background:var(--accent);border-radius:2px;width:${pct}%"></div></div>
