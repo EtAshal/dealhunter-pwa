@@ -2609,6 +2609,7 @@ function showPushPrompt(reg){
   document.body.appendChild(el);
   el.querySelector('#pushNo').onclick=()=>{localStorage.setItem('dh_push_dismissed','1');el.style.animation='fadeOut .2s ease forwards';setTimeout(()=>el.remove(),200);};
   el.querySelector('#pushYes').onclick=async()=>{
+    el.style.animation='fadeOut .2s ease forwards';setTimeout(()=>el.remove(),200);
     try{
       const perm = await Notification.requestPermission();
       if(perm==='granted'){
@@ -2617,7 +2618,6 @@ function showPushPrompt(reg){
         if(ok) showXPToast(0,'Уведомления включены!');
       }
     }catch(e){console.warn('Push sub failed',e);}
-    el.remove();
   };
 }
 async function savePushSub(pushSub){
