@@ -1309,7 +1309,7 @@ function initTheme(){
   }
 }
 const DEV_IDS=['949bf2c2-cf66-4e5a-8b80-3259b65c1934'];
-function isDev(){return DEV_IDS.includes(authUser?.id)||DEV_IDS.includes(localStorage.getItem('dh_device_id'))}
+function isDev(){return DEV_IDS.includes(authUser?.id)}
 function isPro(){if(isDev())return true;const p=getProfile();if(!p.proUntil)return false;return new Date(p.proUntil)>new Date()}
 function activatePro(days){const p=getProfile();const until=new Date();until.setDate(until.getDate()+days);p.proUntil=until.toISOString();saveProfile(p);syncProStatus(true)}
 async function syncProStatus(isPro){if(!authUser)return;try{await sb.from('user_profiles').update({is_pro:isPro}).eq('id',authUser.id)}catch{}}
