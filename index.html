@@ -1213,6 +1213,7 @@ function debounceSyncCloud(){
 async function syncToCloud(){
   const did=getDeviceId();
   const p=getProfile();
+  const SK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVsdGl5c2thZGJrcmRlbnp4eXltIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MTE5NzkyNSwiZXhwIjoyMDk2NzczOTI1fQ.iDCWNP1HiDOsrio8U_gryohJsrxBKduHXQnIqzkeXYE';
   const data={
     device_id:did,xp:p.xp||0,views:p.views||0,wishes:p.wishes||0,shares:p.shares||0,
     reports:p.reports||0,streak:p.streak||1,last_visit:p.lastVisit||null,invited:p.invited||0,
@@ -1222,9 +1223,9 @@ async function syncToCloud(){
     price_alerts:getPriceAlerts(),auth_user_id:authUser?.id||null,
     updated_at:new Date().toISOString()
   };
-  try{await sbFetch(SB_URL+'/rest/v1/device_profiles',{method:'POST',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},body:JSON.stringify(data)});}catch{}
+  try{await sbFetch(SB_URL+'/rest/v1/device_profiles',{method:'POST',headers:{'apikey':SK,'Authorization':'Bearer '+SK,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},body:JSON.stringify(data)});}catch{}
   if(authUser){
-    try{await sbFetch(SB_URL+'/rest/v1/user_profiles?id=eq.'+authUser.id,{method:'PATCH',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({xp:p.xp||0,views:p.views||0,wishes:p.wishes||0,shares:p.shares||0,reports:p.reports||0,streak:p.streak||1,last_visit:p.lastVisit,invited:p.invited||0,keywords:p.keywords||[],unlocked:p.unlocked||[],interests:p.interests||{},night_owl:p.nightOwl||false,pro_until:p.proUntil})});}catch{}
+    try{await sbFetch(SB_URL+'/rest/v1/user_profiles?id=eq.'+authUser.id,{method:'PATCH',headers:{'apikey':SK,'Authorization':'Bearer '+SK,'Content-Type':'application/json'},body:JSON.stringify({xp:p.xp||0,views:p.views||0,wishes:p.wishes||0,shares:p.shares||0,reports:p.reports||0,streak:p.streak||1,last_visit:p.lastVisit,invited:p.invited||0,keywords:p.keywords||[],unlocked:p.unlocked||[],interests:p.interests||{},night_owl:p.nightOwl||false,pro_until:p.proUntil})});}catch{}
   }
 }
 let _loadingCloud=false;
