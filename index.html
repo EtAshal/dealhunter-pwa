@@ -1199,7 +1199,7 @@ function getProfile(){
   try{return JSON.parse(localStorage.getItem('dh_profile')||'null')||defaultProfile()}catch{return defaultProfile()}
 }
 function defaultProfile(){
-  return {xp:0,views:0,wishes:0,shares:0,reports:0,streak:1,lastVisit:new Date().toDateString(),invited:0,keywords:[],notif:{hot:true,priceDrop:true},interests:{games:true,clothes:true,market:true,travel:true,electronics:true},nightOwl:false,unlocked:[],proUntil:null};
+  return {xp:0,views:0,wishes:0,shares:0,reports:0,streak:1,lastVisit:new Date().toISOString(),invited:0,keywords:[],notif:{hot:true,priceDrop:true},interests:{games:true,clothes:true,market:true,travel:true,electronics:true},nightOwl:false,unlocked:[],proUntil:null};
 }
 function saveProfile(p){
   localStorage.setItem('dh_profile',JSON.stringify(p));
@@ -1411,11 +1411,12 @@ function recordClick(dealId,storeId){
 function updateStreak(){
   const p=getProfile();
   const today=new Date().toDateString();
-  if(p.lastVisit===today) return;
+  const lastDay=p.lastVisit?new Date(p.lastVisit).toDateString():null;
+  if(lastDay===today) return;
   const yesterday=new Date(Date.now()-86400000).toDateString();
-  if(p.lastVisit===yesterday){p.streak++;addXP(10,'Ежедневный бонус');}
-  else if(p.lastVisit!==today){p.streak=1;addXP(10,'Ежедневный бонус');}
-  p.lastVisit=today;
+  if(lastDay===yesterday){p.streak++;addXP(10,'Ежедневный бонус');}
+  else{p.streak=1;addXP(10,'Ежедневный бонус');}
+  p.lastVisit=new Date().toISOString();
   if(new Date().getHours()>=0&&new Date().getHours()<5) p.nightOwl=true;
   saveProfile(p);
   checkAchievements();
