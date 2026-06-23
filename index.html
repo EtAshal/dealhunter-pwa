@@ -1259,10 +1259,7 @@ async function loadFromCloud(){
       localStorage.setItem('dh_profile',JSON.stringify(local));
     }
     const lw=getWishlist();
-    let allWish=[...lw];
-    for(const row of allRows){if(row.wishlist?.length)allWish.push(...row.wishlist);}
-    const merged=[...new Set(allWish)];
-    if(merged.length>lw.length) localStorage.setItem('dh_wishlist',JSON.stringify(merged));
+    if(!lw.length&&best.wishlist?.length) localStorage.setItem('dh_wishlist',JSON.stringify(best.wishlist));
     if(!localStorage.getItem('dh_refcode')){
       const rc=allRows.find(r=>r.ref_code);
       if(rc) localStorage.setItem('dh_refcode',rc.ref_code);
