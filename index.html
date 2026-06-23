@@ -1482,7 +1482,7 @@ function updateProfileUI(){
   const nm=el('profRankName');
   if(nm) nm.textContent=authProfile?.display_name||p.userName||rank.name;
   const proBadge=el('profProBadge');
-  if(proBadge) proBadge.style.display='block';
+  if(proBadge) proBadge.style.display=isPro()?'block':'none';
   const lvl=el('profLevel');
   if(lvl) lvl.textContent=RANKS.indexOf(rank)+1;
   const xpSmall=el('profXpSmall');
